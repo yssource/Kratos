@@ -288,6 +288,10 @@ private:
     ///@name Private Operations
     ///@{
 
+    const Variable<double>& GetPrimalVariable() const override;
+
+    const Variable<double>& GetPrimalRelaxedRateVariable() const override;
+
     void CalculateElementData(RansEvmLowReKElementData& rData,
                               const Vector& rShapeFunctions,
                               const Matrix& rShapeFunctionDerivatives,
@@ -295,18 +299,6 @@ private:
                               const int Step = 0) const override;
 
     double CalculateEffectiveKinematicViscosity(const RansEvmLowReKElementData& rData,
-                                                const Vector& rShapeFunctions,
-                                                const Matrix& rShapeFunctionDerivatives,
-                                                const ProcessInfo& rCurrentProcessInfo,
-                                                const int Step = 0) const override;
-
-    double GetScalarVariableGradientNorm(const RansEvmLowReKElementData& rData,
-                                         const Vector& rShapeFunctions,
-                                         const Matrix& rShapeFunctionDerivatives,
-                                         const ProcessInfo& rCurrentProcessInfo,
-                                         const int Step = 0) const override;
-
-    double GetScalarVariableRelaxedAcceleration(const RansEvmLowReKElementData& rData,
                                                 const Vector& rShapeFunctions,
                                                 const Matrix& rShapeFunctionDerivatives,
                                                 const ProcessInfo& rCurrentProcessInfo,

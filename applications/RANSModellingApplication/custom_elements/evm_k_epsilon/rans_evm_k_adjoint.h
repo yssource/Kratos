@@ -43,7 +43,7 @@ namespace Kratos
 ///@}
 ///@name Kratos Classes
 ///@{
-template<std::size_t TNumNodes>
+template <std::size_t TNumNodes>
 struct RansEvmKAdjointData
 {
     double KinematicViscosity;
@@ -309,16 +309,26 @@ private:
     void CalculateElementData(RansEvmKAdjointData<TNumNodes>& rData,
                               const Vector& rShapeFunctions,
                               const Matrix& rShapeFunctionDerivatives,
-                              const ProcessInfo& rCurrentProcessInfo) const override;
+                              const ProcessInfo& rCurrentProcessInfo,
+                              const int Step = 0) const override;
 
     double CalculateEffectiveKinematicViscosity(const RansEvmKAdjointData<TNumNodes>& rCurrentData,
-                                                const ProcessInfo& rCurrentProcessInfo) const override;
+                                                const Vector& rShapeFunctions,
+                                                const Matrix& rShapeFunctionDerivatives,
+                                                const ProcessInfo& rCurrentProcessInfo,
+                                                const int Step = 0) const override;
 
     double CalculateReactionTerm(const RansEvmKAdjointData<TNumNodes>& rCurrentData,
-                                 const ProcessInfo& rCurrentProcessInfo) const override;
+                                 const Vector& rShapeFunctions,
+                                 const Matrix& rShapeFunctionDerivatives,
+                                 const ProcessInfo& rCurrentProcessInfo,
+                                 const int Step = 0) const override;
 
     double CalculateSourceTerm(const RansEvmKAdjointData<TNumNodes>& rCurrentData,
-                               const ProcessInfo& rCurrentProcessInfo) const override;
+                               const Vector& rShapeFunctions,
+                               const Matrix& rShapeFunctionDerivatives,
+                               const ProcessInfo& rCurrentProcessInfo,
+                               const int Step = 0) const override;
 
     void CalculateEffectiveKinematicViscosityScalarDerivatives(
         BoundedVector<double, TNumNodes>& rOutput,
@@ -326,10 +336,11 @@ private:
         const RansEvmKAdjointData<TNumNodes>& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateReactionTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
-                                                const Variable<double>& rDerivativeVariable,
-                                                const RansEvmKAdjointData<TNumNodes>& rCurrentData,
-                                                const ProcessInfo& rCurrentProcessInfo) const override;
+    void CalculateReactionTermScalarDerivatives(
+        BoundedVector<double, TNumNodes>& rOutput,
+        const Variable<double>& rDerivativeVariable,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateSourceTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
                                               const Variable<double>& rDerivativeVariable,
@@ -341,13 +352,15 @@ private:
         const RansEvmKAdjointData<TNumNodes>& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateReactionTermVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-                                                  const RansEvmKAdjointData<TNumNodes>& rCurrentData,
-                                                  const ProcessInfo& rCurrentProcessInfo) const override;
+    void CalculateReactionTermVelocityDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateSourceTermVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-                                                const RansEvmKAdjointData<TNumNodes>& rCurrentData,
-                                                const ProcessInfo& rCurrentProcessInfo) const override;
+    void CalculateSourceTermVelocityDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateEffectiveKinematicViscosityShapeSensitivity(
         const RansEvmKAdjointData<TNumNodes>& rCurrentData,

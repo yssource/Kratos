@@ -360,6 +360,18 @@ void RansEvmLowReKElement<TDim, TNumNodes>::PrintData(std::ostream& rOStream) co
 ///@{
 
 template <unsigned int TDim, unsigned int TNumNodes>
+const Variable<double>& RansEvmLowReKElement<TDim, TNumNodes>::GetPrimalVariable() const
+{
+    return TURBULENT_KINETIC_ENERGY;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+const Variable<double>& RansEvmLowReKElement<TDim, TNumNodes>::GetPrimalRelaxedRateVariable() const
+{
+    return RANS_AUXILIARY_VARIABLE_1;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmLowReKElement<TDim, TNumNodes>::CalculateElementData(
     RansEvmLowReKElementData& rData,
     const Vector& rShapeFunctions,
@@ -394,30 +406,6 @@ double RansEvmLowReKElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscosi
 {
     const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
     return rData.KinematicViscosity + rData.TurbulentKinematicViscosity / tke_sigma;
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
-    const RansEvmLowReKElementData& rData,
-    const Vector& rShapeFunctions,
-    const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo,
-    const int Step) const
-{
-    array_1d<double, 3> tke_gradient;
-    this->CalculateGradient(tke_gradient, TURBULENT_KINETIC_ENERGY, rShapeFunctionDerivatives);
-    return norm_2(tke_gradient);
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReKElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(
-    const RansEvmLowReKElementData& rData,
-    const Vector& rShapeFunctions,
-    const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo,
-    const int Step) const
-{
-    return this->EvaluateInPoint(RANS_AUXILIARY_VARIABLE_1, rShapeFunctions);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>

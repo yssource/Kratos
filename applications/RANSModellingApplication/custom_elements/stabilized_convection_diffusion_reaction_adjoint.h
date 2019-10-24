@@ -31,6 +31,8 @@
 #include "utilities/geometrical_sensitivity_utility.h"
 #include "utilities/time_discretization.h"
 
+#include "stabilized_convection_diffusion_reaction_element.h"
+
 namespace Kratos
 {
 ///@name Kratos Globals
@@ -75,7 +77,8 @@ namespace Kratos
  * @tparam TElementData                    Data container used to calculate derivatives
  */
 template <unsigned int TDim, unsigned int TNumNodes, class TElementData>
-class StabilizedConvectionDiffusionReactionAdjointElement : public Element
+class StabilizedConvectionDiffusionReactionAdjointElement
+    : public StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, TElementData>
 {
 public:
     ///@name Type Definitions
@@ -85,7 +88,7 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(StabilizedConvectionDiffusionReactionAdjointElement);
 
     /// base type: an GeometricalObject that automatically has a unique number
-    typedef Element BaseType;
+    typedef StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, TElementData> BaseType;
 
     /// definition of node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -140,7 +143,7 @@ public:
      * Constructor.
      */
     StabilizedConvectionDiffusionReactionAdjointElement(IndexType NewId = 0)
-        : Element(NewId)
+        : BaseType(NewId)
     {
     }
 
@@ -149,7 +152,7 @@ public:
      */
     StabilizedConvectionDiffusionReactionAdjointElement(IndexType NewId,
                                                         const NodesArrayType& ThisNodes)
-        : Element(NewId, ThisNodes)
+        : BaseType(NewId, ThisNodes)
     {
     }
 
@@ -158,7 +161,7 @@ public:
      */
     StabilizedConvectionDiffusionReactionAdjointElement(IndexType NewId,
                                                         GeometryType::Pointer pGeometry)
-        : Element(NewId, pGeometry)
+        : BaseType(NewId, pGeometry)
     {
     }
 
@@ -168,7 +171,7 @@ public:
     StabilizedConvectionDiffusionReactionAdjointElement(IndexType NewId,
                                                         GeometryType::Pointer pGeometry,
                                                         PropertiesType::Pointer pProperties)
-        : Element(NewId, pGeometry, pProperties)
+        : BaseType(NewId, pGeometry, pProperties)
     {
     }
 
@@ -177,7 +180,7 @@ public:
      */
     StabilizedConvectionDiffusionReactionAdjointElement(
         StabilizedConvectionDiffusionReactionAdjointElement const& rOther)
-        : Element(rOther)
+        : BaseType(rOther)
     {
     }
 
@@ -698,13 +701,13 @@ public:
             this->GetConvectionOperator(primal_variable_gradient_convective_terms,
                                         primal_variable_gradient, r_shape_derivatives);
 
-            const double effective_kinematic_viscosity =
-                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateEffectiveKinematicViscosityVelocityDerivatives(
                 effective_kinematic_viscosity_derivatives, current_data, rCurrentProcessInfo);
 
-            const double reaction =
-                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateReactionTermVelocityDerivatives(
                 reaction_derivatives, current_data, rCurrentProcessInfo);
 
@@ -733,8 +736,8 @@ public:
                 effective_kinematic_viscosity_derivatives, reaction_derivatives,
                 element_length_derivatives, gauss_shape_functions);
 
-            const double source =
-                this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
+            const double source = this->CalculateSourceTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateSourceTermVelocityDerivatives(
                 source_derivatives, current_data, rCurrentProcessInfo);
 
@@ -1033,56 +1036,6 @@ public:
     }
 
     /**
-     * @brief Get the primal scalar variable
-     *
-     * This returns the scalar variable ($\phi$) used in stabilized
-     * convection-diffusion-reaction transport equation.
-     *
-     * This method should be implemented by the derrived class.
-     *
-     * @return const Variable<double>&
-     */
-    virtual const Variable<double>& GetPrimalVariable() const
-    {
-        KRATOS_TRY
-
-        KRATOS_ERROR << "Calling base GetPrimalVariable method in "
-                        "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "class. Please implement it in the derrived class.";
-
-        return RANS_SCALAR_1_ADJOINT_1;
-
-        KRATOS_CATCH("");
-    }
-
-    /**
-     * @brief Get the primal relaxed rate variable
-     *
-     * This method returns the relaxed scalar rate variable ($\dot{\phi}_r$) calculated according
-     * to following equation, where $n$ is the time step:
-     *
-     * \[
-     *      \dot{\phi}_r = \left(1-\alpha_{bossak}\right)\dot{\phi}^{n} + \alpha_{bossak}\dot{\phi}^{n-1}
-     * \]
-     *
-     * This method should be implemented by the derrived class.
-     *
-     * @return const Variable<double>&
-     */
-    virtual const Variable<double>& GetPrimalRelaxedRateVariable() const
-    {
-        KRATOS_TRY
-
-        KRATOS_ERROR << "Calling base GetPrimalRelaxedRateVariable method in "
-                        "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "class. Please implement it in the derrived class.";
-
-        return RANS_SCALAR_1_ADJOINT_1;
-
-        KRATOS_CATCH("");
-    }
-
-    /**
      * @brief Get the adjoint variable
      *
      * This method returns the adjoint variable.
@@ -1122,106 +1075,6 @@ public:
                         "class. Please implement it in the derrived class.";
 
         return RANS_SCALAR_1_ADJOINT_1;
-
-        KRATOS_CATCH("");
-    }
-
-    /**
-     * @brief Calculates all the data required by the element.
-     *
-     * This method is used to calculate and store all the required
-     * quantities under each gauss point. This method is called
-     * for each gauss point, before calculating the derivatives
-     *
-     * This method should be implemented by the derrived class.
-     *
-     * @param rData                      Element data container
-     * @param rShapeFunctions            Gauss point shape functions
-     * @param rShapeFunctionDerivatives  Gauss point shape function derivatives
-     * @param rCurrentProcessInfo        Current process info
-     */
-    virtual void CalculateElementData(TElementData& rData,
-                                      const Vector& rShapeFunctions,
-                                      const Matrix& rShapeFunctionDerivatives,
-                                      const ProcessInfo& rCurrentProcessInfo) const
-    {
-        KRATOS_TRY;
-        KRATOS_ERROR << "Attempting to call base "
-                        "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "CalculateElementData method. "
-                        "Please implement it in the derrived class."
-                     << std::endl;
-        KRATOS_CATCH("");
-    }
-
-    /**
-     * @brief Calculate effective kinematic viscosity
-     *
-     * Calculate effective kinematic viscosity (i.e. $\nu_\phi$)
-     * This method is called for each gauss point.
-     * This method should be implemented by the derrived class.
-     *
-     * @param rCurrentData
-     * @param rCurrentProcessInfo
-     * @return double
-     */
-    virtual double CalculateEffectiveKinematicViscosity(const TElementData& rCurrentData,
-                                                        const ProcessInfo& rCurrentProcessInfo) const
-    {
-        KRATOS_TRY
-
-        KRATOS_ERROR << "Calling base CalculateEffectiveKinematicViscosity "
-                        "method in "
-                        "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "class. Please implement it in the derrived class.";
-
-        KRATOS_CATCH("");
-    }
-
-    /**
-     * @brief Calculates reaction coefficient
-     *
-     * This method calculates reaction coefficient (i.e. $s_\phi$).
-     * This method is called for each gauss point.
-     * This method should be implemented by the derrived class.
-     *
-     * @param rCurrentData
-     * @param rCurrentProcessInfo
-     * @return double
-     */
-    virtual double CalculateReactionTerm(const TElementData& rCurrentData,
-                                         const ProcessInfo& rCurrentProcessInfo) const
-    {
-        KRATOS_TRY
-
-        KRATOS_ERROR << "Calling base CalculateReactionTerm "
-                        "method in "
-                        "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "class. Please implement it in the derrived class.";
-
-        KRATOS_CATCH("");
-    }
-
-    /**
-     * @brief Calculates source term
-     *
-     * This method calculates source term (i.e. $f_\phi$).
-     * This method is called for each gauss point.
-     * This method should be implemented by the derrived class.
-     *
-     * @param rCurrentData
-     * @param rCurrentProcessInfo
-     * @return double
-     */
-    virtual double CalculateSourceTerm(const TElementData& rCurrentData,
-                                       const ProcessInfo& rCurrentProcessInfo) const
-    {
-        KRATOS_TRY
-
-        KRATOS_ERROR << "Calling base CalculateSourceTerm "
-                        "method in "
-                        "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "class. Please implement it in the derrived class.";
 
         KRATOS_CATCH("");
     }
@@ -1538,7 +1391,7 @@ public:
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "StabilizedConvectionDiffusionReactionAdjointElement #" << Id();
+        buffer << "StabilizedConvectionDiffusionReactionAdjointElement #" << this->Id();
         return buffer.str();
     }
 
@@ -1546,14 +1399,15 @@ public:
 
     void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "StabilizedConvectionDiffusionReactionAdjointElement #" << Id();
+        rOStream << "StabilizedConvectionDiffusionReactionAdjointElement #"
+                 << this->Id();
     }
 
     /// Print object's data.
 
     void PrintData(std::ostream& rOStream) const override
     {
-        pGetGeometry()->PrintData(rOStream);
+        this->pGetGeometry()->PrintData(rOStream);
     }
 
     ///@}
@@ -1573,174 +1427,6 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
-
-    /**
-     * @brief Calculates shape function data for this element
-     *
-     * @param rGaussWeights Gauss point weights list
-     * @param rNContainer   Shape function values. Each row contains shape functions for respective gauss point
-     * @param rDN_DX        List of matrices containing shape function derivatives for each gauss point
-     */
-    virtual void CalculateGeometryData(Vector& rGaussWeights,
-                                       Matrix& rNContainer,
-                                       ShapeFunctionDerivativesArrayType& rDN_DX) const
-    {
-        const GeometryType& r_geometry = this->GetGeometry();
-
-        RansCalculationUtilities().CalculateGeometryData(
-            r_geometry, this->GetIntegrationMethod(), rGaussWeights, rNContainer, rDN_DX);
-    }
-
-    /**
-     * @brief Get the Geometry Parameter Derivatives object
-     *
-     * This method calculates partial derivatives of parametric coordinates(i.e. $\underline{\xi}$) of element
-     * w.r.t. physical coordinates (i.e. $\underline{x}$)
-     *
-     * \[
-     *      \frac{\partial \underline{\xi}}{\partial \underline{x}}
-     * \]
-     *
-     * @return ShapeFunctionDerivativesArrayType
-     */
-    ShapeFunctionDerivativesArrayType GetGeometryParameterDerivatives() const
-    {
-        const GeometryType& r_geometry = this->GetGeometry();
-        return RansCalculationUtilities().CalculateGeometryParameterDerivatives(
-            r_geometry, this->GetIntegrationMethod());
-    }
-
-    /**
-     * @brief Calculates scalar value for given gauss point
-     *
-     * @param rVariable      Scalar variable
-     * @param rShapeFunction Gauss point shape functions
-     * @param Step           Step
-     * @return double        Gauss point scalar value
-     */
-    double EvaluateInPoint(const Variable<double>& rVariable,
-                           const Vector& rShapeFunction,
-                           const int Step = 0) const
-    {
-        return RansCalculationUtilities().EvaluateInPoint(
-            this->GetGeometry(), rVariable, rShapeFunction, Step);
-    }
-
-    /**
-     * @brief Calculates vector value for given gauss point
-     *
-     * @param rVariable            Vector variable
-     * @param rShapeFunction       Gauss point shape functions
-     * @param Step                 Step
-     * @return array_1d<double, 3> Gauss point vector value
-     */
-    array_1d<double, 3> EvaluateInPoint(const Variable<array_1d<double, 3>>& rVariable,
-                                        const Vector& rShapeFunction,
-                                        const int Step = 0) const
-    {
-        return RansCalculationUtilities().EvaluateInPoint(
-            this->GetGeometry(), rVariable, rShapeFunction, Step);
-    }
-
-    /**
-     * @brief Get the Convection Operator object
-     *
-     * Calculates convection operator given by following equation
-     *
-     * \[
-     *  w_i\frac{\partial N^a}{\partial x_i}
-     * \]
-     *
-     * $w_i$ being the $i^{th}$ dimension of $\underline{w}$ vector, $N^a$ being the
-     * shape function of $a^{th}$ node, $x_i$ being the $i^{th}$ dimension
-     * of local coordinates
-     *
-     * @param rOutput           Vector of results
-     * @param rVector           Input vector (i.e. $\underline{w}$)
-     * @param rShapeDerivatives Shape function derivatives w.r.t. physical coordinates
-     */
-    void GetConvectionOperator(BoundedVector<double, TNumNodes>& rOutput,
-                               const array_1d<double, 3>& rVector,
-                               const Matrix& rShapeDerivatives) const
-    {
-        rOutput.clear();
-        for (unsigned int i = 0; i < TNumNodes; ++i)
-            for (unsigned int j = 0; j < TDim; j++)
-            {
-                rOutput[i] += rVector[j] * rShapeDerivatives(i, j);
-            }
-    }
-
-    /**
-     * @brief Get the Divergence Operator object
-     *
-     * Calculates divergence of a vector at a gauss point
-     *
-     * @param rVariable          Vector variable
-     * @param rShapeDerivatives  Shape derivatives at gauss point
-     * @param Step               time step
-     * @return double            Divergence of the variable
-     */
-    double GetDivergenceOperator(const Variable<array_1d<double, 3>>& rVariable,
-                                 const Matrix& rShapeDerivatives,
-                                 const int Step = 0) const
-    {
-        double value = 0.0;
-        const GeometryType& r_geometry = this->GetGeometry();
-
-        for (unsigned int i = 0; i < TNumNodes; ++i)
-        {
-            const array_1d<double, 3>& r_value =
-                r_geometry[i].FastGetSolutionStepValue(rVariable, Step);
-            for (unsigned int j = 0; j < TDim; ++j)
-            {
-                value += r_value[j] * rShapeDerivatives(i, j);
-            }
-        }
-
-        return value;
-    }
-
-    /**
-     * @brief Calculate gradient matrix for a vector
-     *
-     * Calculates the gradient matrix for a given vector variable.
-     *
-     * @param rOutput            Output matrix, rows contain the given vector indices, columns containt physical coordinate dimensions
-     * @param rVariable          Vector variable
-     * @param rShapeDerivatives  Shape function derivatives at the gauss point
-     * @param Step               Time step
-     */
-    void CalculateGradient(BoundedMatrix<double, TDim, TDim>& rOutput,
-                           const Variable<array_1d<double, 3>>& rVariable,
-                           const Matrix& rShapeDerivatives,
-                           const int Step = 0) const
-    {
-        const GeometryType& r_geometry = this->GetGeometry();
-
-        RansCalculationUtilities().CalculateGradient<TDim>(
-            rOutput, r_geometry, rVariable, rShapeDerivatives, Step);
-    }
-
-    /**
-     * @brief Calculate gradient vector for a scalar
-     *
-     * Calculates the gradient vector for a given scalar variable.
-     *
-     * @param rOutput            Output vector
-     * @param rVariable          Scalar variable
-     * @param rShapeDerivatives  Shape function derivatives at the gauss point
-     * @param Step               Time step
-     */
-    void CalculateGradient(array_1d<double, 3>& rOutput,
-                           const Variable<double>& rVariable,
-                           const Matrix& rShapeDerivatives,
-                           const int Step = 0) const
-    {
-        const GeometryType& r_geometry = this->GetGeometry();
-        RansCalculationUtilities().CalculateGradient(
-            rOutput, r_geometry, rVariable, rShapeDerivatives, Step);
-    }
 
     ///@}
     ///@name Protected  Access
@@ -1766,6 +1452,11 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    double GetDeltaTime(const ProcessInfo& rProcessInfo) const override
+    {
+        return -1.0 * rProcessInfo[DELTA_TIME];
+    }
 
     void AddPrimalSteadyTermScalarDerivatives(BoundedMatrix<double, TNumNodes, TNumNodes>& rLeftHandSideMatrix,
                                               const Variable<double>& rDerivativeVariable,
@@ -1829,19 +1520,19 @@ private:
             this->GetConvectionOperator(scalar_convective_terms,
                                         scalar_gradient, r_shape_derivatives);
 
-            const double effective_kinematic_viscosity =
-                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateEffectiveKinematicViscosityScalarDerivatives(
                 effective_kinematic_viscosity_derivatives, rDerivativeVariable,
                 current_data, rCurrentProcessInfo);
 
-            const double reaction =
-                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateReactionTermScalarDerivatives(
                 reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
-            const double source =
-                this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
+            const double source = this->CalculateSourceTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateSourceTermScalarDerivatives(
                 source_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
@@ -2075,14 +1766,14 @@ private:
             this->GetConvectionOperator(scalar_convective_terms,
                                         scalar_gradient, r_shape_derivatives);
 
-            const double effective_kinematic_viscosity =
-                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
-            const double reaction =
-                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
-            const double source =
-                this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
+            const double source = this->CalculateSourceTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -2156,137 +1847,10 @@ private:
     {
         KRATOS_TRY
 
-        // Get Shape function data
-        Vector gauss_weights;
-        Matrix shape_functions;
-        ShapeFunctionDerivativesArrayType shape_derivatives;
-        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
-        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
-            this->GetGeometryParameterDerivatives();
-        const unsigned int num_gauss_points = gauss_weights.size();
-
-        const Variable<double>& primal_variable = this->GetPrimalVariable();
-
-        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
-        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma =
-            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
-        const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
-
-        BoundedVector<double, TNumNodes> velocity_convective_terms;
-
-        Matrix contravariant_metric_tensor(TDim, TDim);
-
-        array_1d<double, 3> variable_gradient;
-
-        TElementData r_current_data;
-
-        for (unsigned int g = 0; g < num_gauss_points; g++)
-        {
-            const Matrix& r_shape_derivatives = shape_derivatives[g];
-            const Vector& gauss_shape_functions = row(shape_functions, g);
-
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
-
-            const array_1d<double, 3>& velocity =
-                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
-            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
-            const double velocity_magnitude = norm_2(velocity);
-
-            this->CalculateElementData(r_current_data, gauss_shape_functions,
-                                       r_shape_derivatives, rCurrentProcessInfo);
-
-            this->CalculateGradient(variable_gradient, primal_variable, r_shape_derivatives);
-            const double variable_gradient_norm = norm_2(variable_gradient);
-
-            const double effective_kinematic_viscosity =
-                this->CalculateEffectiveKinematicViscosity(r_current_data, rCurrentProcessInfo);
-
-            const double relaxed_variable_acceleration = this->EvaluateInPoint(
-                this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
-
-            const double reaction =
-                this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
-
-            double tau, element_length;
-            StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
-                tau, element_length, velocity, contravariant_metric_tensor,
-                reaction, effective_kinematic_viscosity, bossak_alpha,
-                bossak_gamma, delta_time, dynamic_tau);
-
-            // Calculate residual for cross wind dissipation coefficient
-            double cross_wind_diffusion{0.0}, stream_line_diffusion{0.0};
-            const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
-
-            const double velocity_dot_variable_gradient =
-                inner_prod(velocity, variable_gradient);
-            const double variable_value =
-                this->EvaluateInPoint(primal_variable, gauss_shape_functions);
-
-            if (variable_gradient_norm > std::numeric_limits<double>::epsilon() &&
-                velocity_magnitude_square > std::numeric_limits<double>::epsilon())
-            {
-                const double source =
-                    this->CalculateSourceTerm(r_current_data, rCurrentProcessInfo);
-
-                double residual = relaxed_variable_acceleration;
-                residual += velocity_dot_variable_gradient;
-                residual += reaction * variable_value;
-                residual -= source;
-                residual = std::abs(residual);
-                residual /= variable_gradient_norm;
-
-                double chi, k1, k2;
-                StabilizedConvectionDiffusionReactionUtilities::CalculateCrossWindDiffusionParameters(
-                    chi, k1, k2, velocity_magnitude, tau,
-                    effective_kinematic_viscosity, reaction, bossak_alpha,
-                    bossak_gamma, delta_time, element_length, dynamic_tau);
-
-                stream_line_diffusion = residual * chi * k1 / velocity_magnitude_square;
-                cross_wind_diffusion = residual * chi * k2 / velocity_magnitude_square;
-            }
-
-            const double s = std::abs(reaction);
-
-            for (unsigned int a = 0; a < TNumNodes; a++)
-            {
-                for (unsigned int c = 0; c < TNumNodes; c++)
-                {
-                    double dNa_dNc = 0.0;
-                    for (unsigned int i = 0; i < TDim; i++)
-                        dNa_dNc += r_shape_derivatives(a, i) * r_shape_derivatives(c, i);
-
-                    double value = 0.0;
-
-                    value += gauss_shape_functions[a] * velocity_convective_terms[c];
-                    value += gauss_shape_functions[a] * reaction *
-                             gauss_shape_functions[c]; // * positive_values_list[c];
-                    value += effective_kinematic_viscosity * dNa_dNc;
-
-                    // Adding SUPG stabilization terms
-                    value += tau *
-                             (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
-                             velocity_convective_terms[c];
-                    value += tau *
-                             (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
-                             reaction * gauss_shape_functions[c]; // * positive_values_list[c];
-
-                    // // Adding cross wind dissipation
-                    value += cross_wind_diffusion * dNa_dNc * velocity_magnitude_square;
-                    value -= cross_wind_diffusion * velocity_convective_terms[a] *
-                             velocity_convective_terms[c];
-
-                    // Adding stream line dissipation
-                    value += stream_line_diffusion * velocity_convective_terms[a] *
-                             velocity_convective_terms[c];
-
-                    rPrimalDampingMatrix(c, a) += -1.0 * gauss_weights[g] * value;
-                }
-            }
-        }
+        BoundedMatrix<double, TNumNodes, TNumNodes> local_matrix;
+        this->CalculatePrimalDampingMatrix(local_matrix, rCurrentProcessInfo);
+        local_matrix = trans(local_matrix);
+        noalias(rPrimalDampingMatrix) -= local_matrix;
 
         KRATOS_CATCH("");
     }
@@ -2303,73 +1867,16 @@ private:
         KRATOS_CATCH("");
     }
 
-    void AddPrimalMassMatrix(BoundedMatrix<double, TNumNodes, TNumNodes>& rMassMatrix,
+    void AddPrimalMassMatrix(BoundedMatrix<double, TNumNodes, TNumNodes>& rPrimalMassMatrix,
                              const double ScalingFactor,
                              const ProcessInfo& rCurrentProcessInfo)
     {
         KRATOS_TRY
 
-        // Get Shape function data
-        Vector gauss_weights;
-        Matrix shape_functions;
-        ShapeFunctionDerivativesArrayType shape_derivatives;
-        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
-        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
-            this->GetGeometryParameterDerivatives();
-        const unsigned int num_gauss_points = gauss_weights.size();
-
-        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
-        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma =
-            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
-        const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
-
-        TElementData current_data;
-
-        for (unsigned int g = 0; g < num_gauss_points; g++)
-        {
-            const Matrix& r_shape_derivatives = shape_derivatives[g];
-            const Vector& gauss_shape_functions = row(shape_functions, g);
-
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
-                                               r_parameter_derivatives_g.size2());
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
-
-            const double mass = gauss_weights[g] / TNumNodes;
-            this->AddLumpedMassMatrix(rMassMatrix, mass * ScalingFactor, rCurrentProcessInfo);
-
-            const array_1d<double, 3>& velocity =
-                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
-            BoundedVector<double, TNumNodes> velocity_convective_terms;
-            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
-
-            this->CalculateElementData(current_data, gauss_shape_functions,
-                                       r_shape_derivatives, rCurrentProcessInfo);
-
-            const double effective_kinematic_viscosity =
-                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
-
-            const double reaction =
-                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
-
-            double tau, element_length;
-            StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
-                tau, element_length, velocity, contravariant_metric_tensor,
-                reaction, effective_kinematic_viscosity, bossak_alpha,
-                bossak_gamma, delta_time, dynamic_tau);
-
-            const double s = std::abs(reaction);
-
-            // Add mass stabilization terms
-            for (unsigned int i = 0; i < TNumNodes; ++i)
-                for (unsigned int j = 0; j < TNumNodes; ++j)
-                    rMassMatrix(j, i) +=
-                        ScalingFactor * gauss_weights[g] * tau *
-                        (velocity_convective_terms[i] + s * gauss_shape_functions[i]) *
-                        gauss_shape_functions[j];
-        }
+        BoundedMatrix<double, TNumNodes, TNumNodes> local_matrix;
+        this->CalculatePrimalMassMatrix(local_matrix, rCurrentProcessInfo);
+        local_matrix = trans(local_matrix);
+        noalias(rPrimalMassMatrix) += local_matrix * ScalingFactor;
 
         KRATOS_CATCH("");
     }
@@ -2421,14 +1928,14 @@ private:
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
-            const double effective_kinematic_viscosity =
-                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateEffectiveKinematicViscosityScalarDerivatives(
                 effective_kinematic_viscosity_derivatives, rDerivativeVariable,
                 current_data, rCurrentProcessInfo);
 
-            const double reaction =
-                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateReactionTermScalarDerivatives(
                 reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
@@ -2571,12 +2078,12 @@ private:
                 primal_variable_relaxed_rate_nodal_values, *this,
                 this->GetPrimalRelaxedRateVariable());
 
-            const double effective_kinematic_viscosity =
-                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
-            const double reaction =
-                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
-            const double source =
-                this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            const double source = this->CalculateSourceTerm(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(

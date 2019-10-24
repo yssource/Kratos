@@ -365,6 +365,18 @@ void RansEvmLowReEpsilonElement<TDim, TNumNodes>::PrintData(std::ostream& rOStre
 ///@{
 
 template <unsigned int TDim, unsigned int TNumNodes>
+const Variable<double>& RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetPrimalVariable() const
+{
+    return TURBULENT_ENERGY_DISSIPATION_RATE;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+const Variable<double>& RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetPrimalRelaxedRateVariable() const
+{
+    return RANS_AUXILIARY_VARIABLE_2;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateElementData(
     RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
@@ -409,31 +421,6 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateEffectiveKinematicV
     const double epsilon_sigma =
         rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
     return rData.KinematicViscosity + rData.TurbulentKinematicViscosity / epsilon_sigma;
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
-    const RansEvmLowReEpsilonElementData& rData,
-    const Vector& rShapeFunctions,
-    const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo,
-    const int Step) const
-{
-    array_1d<double, 3> epsilon_gradient;
-    this->CalculateGradient(epsilon_gradient, TURBULENT_ENERGY_DISSIPATION_RATE,
-                            rShapeFunctionDerivatives);
-    return norm_2(epsilon_gradient);
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(
-    const RansEvmLowReEpsilonElementData& rData,
-    const Vector& rShapeFunctions,
-    const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo,
-    const int Step) const
-{
-    return this->EvaluateInPoint(RANS_AUXILIARY_VARIABLE_2, rShapeFunctions);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>

@@ -353,7 +353,8 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateElementData(
     RansEvmEpsilonAdjointData<TNumNodes>& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo) const
+    const ProcessInfo& rCurrentProcessInfo,
+    const int Step) const
 {
     rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
     rData.ShapeFunctions = rShapeFunctions;
@@ -419,21 +420,33 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateElementData(
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosity(
-    const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
+    const ProcessInfo& rCurrentProcessInfo,
+    const int Step) const
 {
     return rCurrentData.EffectiveKinematicViscosity;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateReactionTerm(
-    const RansEvmEpsilonAdjointData<TNumNodes>& rData, const ProcessInfo& rCurrentProcessInfo) const
+    const RansEvmEpsilonAdjointData<TNumNodes>& rData,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
+    const ProcessInfo& rCurrentProcessInfo,
+    const int Step) const
 {
     return rData.C2 * rData.Gamma + rData.C1 * 2.0 * rData.VelocityDivergence / 3.0;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateSourceTerm(
-    const RansEvmEpsilonAdjointData<TNumNodes>& rData, const ProcessInfo& rCurrentProcessInfo) const
+    const RansEvmEpsilonAdjointData<TNumNodes>& rData,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
+    const ProcessInfo& rCurrentProcessInfo,
+    const int Step) const
 {
     BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
     this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rData.ShapeFunctionDerivatives);

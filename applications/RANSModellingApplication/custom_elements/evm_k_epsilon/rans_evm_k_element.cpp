@@ -359,6 +359,18 @@ void RansEvmKElement<TDim, TNumNodes>::PrintData(std::ostream& rOStream) const
 ///@{
 
 template <unsigned int TDim, unsigned int TNumNodes>
+const Variable<double>& RansEvmKElement<TDim, TNumNodes>::GetPrimalVariable() const
+{
+    return TURBULENT_KINETIC_ENERGY;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+const Variable<double>& RansEvmKElement<TDim, TNumNodes>::GetPrimalRelaxedRateVariable() const
+{
+    return RANS_AUXILIARY_VARIABLE_1;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKElement<TDim, TNumNodes>::CalculateElementData(RansEvmKElementData& rData,
                                                             const Vector& rShapeFunctions,
                                                             const Matrix& rShapeFunctionDerivatives,
@@ -394,30 +406,6 @@ double RansEvmKElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscosity(
 {
     const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
     return rData.KinematicViscosity + rData.TurbulentKinematicViscosity / tke_sigma;
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
-    const RansEvmKElementData& rData,
-    const Vector& rShapeFunctions,
-    const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo,
-    const int Step) const
-{
-    array_1d<double, 3> tke_gradient;
-    this->CalculateGradient(tke_gradient, TURBULENT_KINETIC_ENERGY, rShapeFunctionDerivatives);
-    return norm_2(tke_gradient);
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(
-    const RansEvmKElementData& rData,
-    const Vector& rShapeFunctions,
-    const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo,
-    const int Step) const
-{
-    return this->EvaluateInPoint(RANS_AUXILIARY_VARIABLE_1, rShapeFunctions);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>

@@ -316,16 +316,26 @@ private:
     void CalculateElementData(RansEvmEpsilonAdjointData<TNumNodes>& rData,
                               const Vector& rShapeFunctions,
                               const Matrix& rShapeFunctionDerivatives,
-                              const ProcessInfo& rCurrentProcessInfo) const override;
+                              const ProcessInfo& rCurrentProcessInfo,
+                              const int Step = 0) const override;
 
     double CalculateEffectiveKinematicViscosity(const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
-                                                const ProcessInfo& rCurrentProcessInfo) const override;
+                                                const Vector& rShapeFunctions,
+                                                const Matrix& rShapeFunctionDerivatives,
+                                                const ProcessInfo& rCurrentProcessInfo,
+                                                const int Step = 0) const override;
 
     double CalculateReactionTerm(const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
-                                 const ProcessInfo& rCurrentProcessInfo) const override;
+                                 const Vector& rShapeFunctions,
+                                 const Matrix& rShapeFunctionDerivatives,
+                                 const ProcessInfo& rCurrentProcessInfo,
+                                 const int Step = 0) const override;
 
     double CalculateSourceTerm(const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
-                               const ProcessInfo& rCurrentProcessInfo) const override;
+                               const Vector& rShapeFunctions,
+                               const Matrix& rShapeFunctionDerivatives,
+                               const ProcessInfo& rCurrentProcessInfo,
+                               const int Step = 0) const override;
 
     void CalculateEffectiveKinematicViscosityScalarDerivatives(
         BoundedVector<double, TNumNodes>& rOutput,

@@ -292,17 +292,17 @@ private:
     ///@name Private Operations
     ///@{
 
-    void CalculateConvectionDiffusionReactionData(RansEvmEpsilonElementData& rData,
-                                                  const Vector& rShapeFunctions,
-                                                  const Matrix& rShapeFunctionDerivatives,
-                                                  const ProcessInfo& rCurrentProcessInfo,
-                                                  const int Step = 0) const override;
+    void CalculateElementData(RansEvmEpsilonElementData& rData,
+                              const Vector& rShapeFunctions,
+                              const Matrix& rShapeFunctionDerivatives,
+                              const ProcessInfo& rCurrentProcessInfo,
+                              const int Step = 0) const override;
 
-    double GetEffectiveKinematicViscosity(const RansEvmEpsilonElementData& rData,
-                                          const Vector& rShapeFunctions,
-                                          const Matrix& rShapeFunctionDerivatives,
-                                          const ProcessInfo& rCurrentProcessInfo,
-                                          const int Step = 0) const override;
+    double CalculateEffectiveKinematicViscosity(const RansEvmEpsilonElementData& rData,
+                                                const Vector& rShapeFunctions,
+                                                const Matrix& rShapeFunctionDerivatives,
+                                                const ProcessInfo& rCurrentProcessInfo,
+                                                const int Step = 0) const override;
 
     double GetScalarVariableGradientNorm(const RansEvmEpsilonElementData& rData,
                                          const Vector& rShapeFunctions,
@@ -317,10 +317,14 @@ private:
                                                 const int Step = 0) const override;
 
     double CalculateReactionTerm(const RansEvmEpsilonElementData& rData,
+                                 const Vector& rShapeFunctions,
+                                 const Matrix& rShapeFunctionDerivatives,
                                  const ProcessInfo& rCurrentProcessInfo,
                                  const int Step = 0) const override;
 
     double CalculateSourceTerm(const RansEvmEpsilonElementData& rData,
+                               const Vector& rShapeFunctions,
+                               const Matrix& rShapeFunctionDerivatives,
                                const ProcessInfo& rCurrentProcessInfo,
                                const int Step = 0) const override;
 

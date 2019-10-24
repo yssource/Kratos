@@ -365,7 +365,7 @@ void RansEvmLowReEpsilonElement<TDim, TNumNodes>::PrintData(std::ostream& rOStre
 ///@{
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
+void RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateElementData(
     RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -400,8 +400,8 @@ void RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateConvectionDiffusionRe
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(const
-    RansEvmLowReEpsilonElementData& rData,
+double RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscosity(
+    const RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -413,8 +413,8 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetEffectiveKinematicViscosi
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(const
-    RansEvmLowReEpsilonElementData& rData,
+double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
+    const RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -427,8 +427,8 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableGradientNor
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(const
-    RansEvmLowReEpsilonElementData& rData,
+double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(
+    const RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -440,6 +440,8 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcce
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateReactionTerm(
     const RansEvmLowReEpsilonElementData& rData,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
     const int Step) const
 {
@@ -451,6 +453,8 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateReactionTerm(
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateSourceTerm(
     const RansEvmLowReEpsilonElementData& rData,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
     const int Step) const
 {

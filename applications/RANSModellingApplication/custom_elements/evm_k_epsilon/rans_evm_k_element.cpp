@@ -359,12 +359,11 @@ void RansEvmKElement<TDim, TNumNodes>::PrintData(std::ostream& rOStream) const
 ///@{
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void RansEvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
-    RansEvmKElementData& rData,
-    const Vector& rShapeFunctions,
-    const Matrix& rShapeFunctionDerivatives,
-    const ProcessInfo& rCurrentProcessInfo,
-    const int Step) const
+void RansEvmKElement<TDim, TNumNodes>::CalculateElementData(RansEvmKElementData& rData,
+                                                            const Vector& rShapeFunctions,
+                                                            const Matrix& rShapeFunctionDerivatives,
+                                                            const ProcessInfo& rCurrentProcessInfo,
+                                                            const int Step) const
 {
     KRATOS_TRY
 
@@ -388,8 +387,8 @@ void RansEvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(const
-    RansEvmKElementData& rData,
+double RansEvmKElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscosity(
+    const RansEvmKElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -400,8 +399,8 @@ double RansEvmKElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(const
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(const
-    RansEvmKElementData& rData,
+double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
+    const RansEvmKElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -413,8 +412,8 @@ double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(const
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(const
-    RansEvmKElementData& rData,
+double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(
+    const RansEvmKElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -424,15 +423,20 @@ double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(co
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::CalculateReactionTerm(const RansEvmKElementData& rData,
-                                                               const ProcessInfo& rCurrentProcessInfo,
-                                                               const int Step) const
+double RansEvmKElement<TDim, TNumNodes>::CalculateReactionTerm(
+    const RansEvmKElementData& rData,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
+    const ProcessInfo& rCurrentProcessInfo,
+    const int Step) const
 {
     return std::max(rData.Gamma + (2.0 / 3.0) * rData.VelocityDivergence, 0.0);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmKElement<TDim, TNumNodes>::CalculateSourceTerm(const RansEvmKElementData& rData,
+                                                             const Vector& rShapeFunctions,
+                                                             const Matrix& rShapeFunctionDerivatives,
                                                              const ProcessInfo& rCurrentProcessInfo,
                                                              const int Step) const
 {

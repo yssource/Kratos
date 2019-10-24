@@ -318,15 +318,16 @@ public:
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
 
             TConvectionDiffusionReactionData r_current_data;
-            this->CalculateConvectionDiffusionReactionData(
-                r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
-            const double effective_kinematic_viscosity = this->GetEffectiveKinematicViscosity(
+            this->CalculateElementData(r_current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
                 r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
-            const double reaction =
-                this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             const double source =
-                this->CalculateSourceTerm(r_current_data, rCurrentProcessInfo);
+                this->CalculateSourceTerm(r_current_data, gauss_shape_functions,
+                                          r_shape_derivatives, rCurrentProcessInfo);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -433,13 +434,13 @@ public:
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
             TConvectionDiffusionReactionData r_current_data;
-            this->CalculateConvectionDiffusionReactionData(
-                r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
-            const double effective_kinematic_viscosity = this->GetEffectiveKinematicViscosity(
+            this->CalculateElementData(r_current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
                 r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
-            const double reaction =
-                this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -509,17 +510,17 @@ public:
             const double velocity_magnitude = norm_2(velocity);
 
             TConvectionDiffusionReactionData r_current_data;
-            this->CalculateConvectionDiffusionReactionData(
-                r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
-            const double effective_kinematic_viscosity = this->GetEffectiveKinematicViscosity(
+            this->CalculateElementData(r_current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
+            const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
                 r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             const double variable_gradient_norm = this->GetScalarVariableGradientNorm(
                 r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             const double relaxed_variable_acceleration = this->GetScalarVariableRelaxedAcceleration(
                 r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
-            const double reaction =
-                this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
+            const double reaction = this->CalculateReactionTerm(
+                r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -537,8 +538,9 @@ public:
             if (variable_gradient_norm > std::numeric_limits<double>::epsilon() &&
                 velocity_magnitude_square > std::numeric_limits<double>::epsilon())
             {
-                const double source =
-                    this->CalculateSourceTerm(r_current_data, rCurrentProcessInfo);
+                const double source = this->CalculateSourceTerm(
+                    r_current_data, gauss_shape_functions, r_shape_derivatives,
+                    rCurrentProcessInfo);
 
                 double residual = relaxed_variable_acceleration;
                 residual += inner_prod(velocity_convective_terms, nodal_variable);
@@ -662,31 +664,31 @@ public:
         return value;
     }
 
-    virtual void CalculateConvectionDiffusionReactionData(TConvectionDiffusionReactionData& rData,
-                                                          const Vector& rShapeFunctions,
-                                                          const Matrix& rShapeFunctionDerivatives,
-                                                          const ProcessInfo& rCurrentProcessInfo,
-                                                          const int Step = 0) const
+    virtual void CalculateElementData(TConvectionDiffusionReactionData& rData,
+                                      const Vector& rShapeFunctions,
+                                      const Matrix& rShapeFunctionDerivatives,
+                                      const ProcessInfo& rCurrentProcessInfo,
+                                      const int Step = 0) const
     {
         KRATOS_TRY;
         KRATOS_ERROR << "Attempting to call base "
                         "StabilizedConvectionDiffusionReactionElement "
-                        "CalculateConvectionDiffusionReactionData method. "
+                        "CalculateElementData method. "
                         "Please implement it in the derrived class."
                      << std::endl;
         KRATOS_CATCH("");
     }
 
-    virtual double GetEffectiveKinematicViscosity(const TConvectionDiffusionReactionData& rData,
-                                                  const Vector& rShapeFunctions,
-                                                  const Matrix& rShapeFunctionDerivatives,
-                                                  const ProcessInfo& rCurrentProcessInfo,
-                                                  const int Step = 0) const
+    virtual double CalculateEffectiveKinematicViscosity(const TConvectionDiffusionReactionData& rData,
+                                                        const Vector& rShapeFunctions,
+                                                        const Matrix& rShapeFunctionDerivatives,
+                                                        const ProcessInfo& rCurrentProcessInfo,
+                                                        const int Step = 0) const
     {
         KRATOS_TRY;
         KRATOS_ERROR << "Attempting to call base "
                         "StabilizedConvectionDiffusionReactionElement "
-                        "GetEffectiveKinematicViscosity method. "
+                        "CalculateEffectiveKinematicViscosity method. "
                         "Please implement it in the derrived class."
                      << std::endl;
         KRATOS_CATCH("");
@@ -730,6 +732,8 @@ public:
     }
 
     virtual double CalculateReactionTerm(const TConvectionDiffusionReactionData& rData,
+                                         const Vector& rShapeFunctions,
+                                         const Matrix& rShapeFunctionDerivatives,
                                          const ProcessInfo& rCurrentProcessInfo,
                                          const int Step = 0) const
     {
@@ -743,6 +747,8 @@ public:
     }
 
     virtual double CalculateSourceTerm(const TConvectionDiffusionReactionData& rData,
+                                       const Vector& rShapeFunctions,
+                                       const Matrix& rShapeFunctionDerivatives,
                                        const ProcessInfo& rCurrentProcessInfo,
                                        const int Step = 0) const
     {

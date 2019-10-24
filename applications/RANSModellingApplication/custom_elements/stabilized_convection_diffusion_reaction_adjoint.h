@@ -687,9 +687,8 @@ public:
             const Matrix& r_shape_derivatives = shape_derivatives[g];
             const Vector& gauss_shape_functions = row(shape_functions, g);
 
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives[g]);
 
             this->CalculateElementData(current_data, gauss_shape_functions,
                                        r_shape_derivatives, rCurrentProcessInfo);
@@ -1502,9 +1501,8 @@ private:
             const Matrix& r_shape_derivatives = shape_derivatives[g];
             const Vector& gauss_shape_functions = row(shape_functions, g);
 
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives[g]);
 
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -1748,9 +1746,8 @@ private:
             const Matrix& r_shape_derivatives = shape_derivatives[g];
             const Vector& gauss_shape_functions = row(shape_functions, g);
 
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives[g]);
 
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -1855,18 +1852,6 @@ private:
         KRATOS_CATCH("");
     }
 
-    void AddLumpedMassMatrix(BoundedMatrix<double, TNumNodes, TNumNodes>& rMassMatrix,
-                             const double Mass,
-                             const ProcessInfo& rCurrentProcessInfo)
-    {
-        KRATOS_TRY
-
-        for (unsigned int i = 0; i < TNumNodes; ++i)
-            rMassMatrix(i, i) += Mass;
-
-        KRATOS_CATCH("");
-    }
-
     void AddPrimalMassMatrix(BoundedMatrix<double, TNumNodes, TNumNodes>& rPrimalMassMatrix,
                              const double ScalingFactor,
                              const ProcessInfo& rCurrentProcessInfo)
@@ -1903,7 +1888,7 @@ private:
             TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
 
-        Matrix contravariant_metric_tensor(TDim, TDim);
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
 
         BoundedVector<double, TNumNodes> velocity_convective_terms,
             tau_derivatives, effective_kinematic_viscosity_derivatives,
@@ -1916,10 +1901,8 @@ private:
             const Matrix& r_shape_derivatives = shape_derivatives[g];
             const Vector& gauss_shape_functions = row(shape_functions, g);
 
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives[g]);
 
             this->CalculateElementData(current_data, gauss_shape_functions,
                                        r_shape_derivatives, rCurrentProcessInfo);
@@ -2049,8 +2032,8 @@ private:
 
             const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
 
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives_g);
 
             this->CalculateElementData(current_data, gauss_shape_functions,
                                        r_shape_derivatives, rCurrentProcessInfo);

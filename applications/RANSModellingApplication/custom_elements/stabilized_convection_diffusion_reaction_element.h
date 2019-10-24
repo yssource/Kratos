@@ -303,16 +303,15 @@ public:
             TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
 
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
+
         for (IndexType g = 0; g < num_gauss_points; g++)
         {
             const Matrix& r_shape_derivatives = shape_derivatives[g];
             const Vector gauss_shape_functions = row(shape_functions, g);
 
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
-                                               r_parameter_derivatives_g.size2());
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives[g]);
 
             const array_1d<double, 3> velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -739,16 +738,15 @@ public:
         array_1d<double, 3> variable_gradient;
         const Variable<double>& primal_variable = this->GetPrimalVariable();
 
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
+
         for (IndexType g = 0; g < num_gauss_points; g++)
         {
             const Matrix& r_shape_derivatives = shape_derivatives[g];
             const Vector gauss_shape_functions = row(shape_functions, g);
 
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
-                                               r_parameter_derivatives_g.size2());
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives[g]);
 
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -875,16 +873,15 @@ public:
             TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
 
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
+
         for (IndexType g = 0; g < num_gauss_points; g++)
         {
             const Matrix& r_shape_derivatives = shape_derivatives[g];
             const Vector gauss_shape_functions = row(shape_functions, g);
 
-            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
-            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
-                                               r_parameter_derivatives_g.size2());
-            noalias(contravariant_metric_tensor) =
-                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+            this->CalculateContravariantMetricTensor(
+                contravariant_metric_tensor, r_parameter_derivatives[g]);
 
             const double mass = gauss_weights[g] * (1.0 / TNumNodes);
             this->AddLumpedMassMatrix(rMassMatrix, mass);
@@ -921,69 +918,6 @@ public:
         }
 
         KRATOS_CATCH("");
-    }
-
-    ///@}
-    ///@name Access
-    ///@{
-
-    ///@}
-    ///@name Inquiry
-    ///@{
-
-    ///@}
-    ///@name Input and output
-    ///@{
-
-    /// Turn back information as a string.
-    std::string Info() const override
-    {
-        std::stringstream buffer;
-        buffer << "StabilizedConvectionDiffusionReactionElement #" << Id();
-        return buffer.str();
-    }
-    /// Print information about this object.
-    void PrintInfo(std::ostream& rOStream) const override
-    {
-        rOStream << "StabilizedConvectionDiffusionReactionElement #" << Id();
-    }
-
-    ///@}
-    ///@name Friends
-    ///@{
-
-    ///@}
-
-protected:
-    ///@name Protected static Member Variables
-    ///@{
-
-    ///@}
-    ///@name Protected member Variables
-    ///@{
-
-    ///@}
-    ///@name Protected Operators
-    ///@{
-
-    ///@}
-    ///@name Protected Operations
-    ///@{
-    /**
-     * @brief Calculates shape function data for this element
-     *
-     * @param rGaussWeights Gauss point weights list
-     * @param rNContainer   Shape function values. Each row contains shape functions for respective gauss point
-     * @param rDN_DX        List of matrices containing shape function derivatives for each gauss point
-     */
-    virtual void CalculateGeometryData(Vector& rGaussWeights,
-                                       Matrix& rNContainer,
-                                       ShapeFunctionDerivativesArrayType& rDN_DX) const
-    {
-        const GeometryType& r_geometry = this->GetGeometry();
-
-        RansCalculationUtilities().CalculateGeometryData(
-            r_geometry, this->GetIntegrationMethod(), rGaussWeights, rNContainer, rDN_DX);
     }
 
     /**
@@ -1054,6 +988,75 @@ protected:
         const GeometryType& r_geometry = this->GetGeometry();
         RansCalculationUtilities().CalculateGradient(
             rOutput, r_geometry, rVariable, rShapeDerivatives, Step);
+    }
+
+    void CalculateContravariantMetricTensor(BoundedMatrix<double, TDim, TDim>& rOutput,
+                                            const Matrix& rParameterDerivatives) const
+    {
+        noalias(rOutput) = prod(trans(rParameterDerivatives), rParameterDerivatives);
+    }
+
+    ///@}
+    ///@name Access
+    ///@{
+
+    ///@}
+    ///@name Inquiry
+    ///@{
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+    /// Turn back information as a string.
+    std::string Info() const override
+    {
+        std::stringstream buffer;
+        buffer << "StabilizedConvectionDiffusionReactionElement #" << Id();
+        return buffer.str();
+    }
+    /// Print information about this object.
+    void PrintInfo(std::ostream& rOStream) const override
+    {
+        rOStream << "StabilizedConvectionDiffusionReactionElement #" << Id();
+    }
+
+    ///@}
+    ///@name Friends
+    ///@{
+
+    ///@}
+
+protected:
+    ///@name Protected static Member Variables
+    ///@{
+
+    ///@}
+    ///@name Protected member Variables
+    ///@{
+
+    ///@}
+    ///@name Protected Operators
+    ///@{
+
+    ///@}
+    ///@name Protected Operations
+    ///@{
+    /**
+     * @brief Calculates shape function data for this element
+     *
+     * @param rGaussWeights Gauss point weights list
+     * @param rNContainer   Shape function values. Each row contains shape functions for respective gauss point
+     * @param rDN_DX        List of matrices containing shape function derivatives for each gauss point
+     */
+    virtual void CalculateGeometryData(Vector& rGaussWeights,
+                                       Matrix& rNContainer,
+                                       ShapeFunctionDerivativesArrayType& rDN_DX) const
+    {
+        const GeometryType& r_geometry = this->GetGeometry();
+
+        RansCalculationUtilities().CalculateGeometryData(
+            r_geometry, this->GetIntegrationMethod(), rGaussWeights, rNContainer, rDN_DX);
     }
 
     void AddLumpedMassMatrix(BoundedMatrix<double, TNumNodes, TNumNodes>& rMassMatrix,

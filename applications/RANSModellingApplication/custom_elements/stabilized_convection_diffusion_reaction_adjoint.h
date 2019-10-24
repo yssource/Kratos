@@ -1624,7 +1624,8 @@ private:
                 reaction_derivatives, effective_kinematic_viscosity_derivatives);
 
             StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateCrossWindDiffusionCoeffScalarDerivatives(
-                crosswind_diffusion_coeff_derivatives, psi_one, element_length, psi_one_derivatives,
+                crosswind_diffusion_coeff_derivatives, psi_one, psi_two,
+                element_length, effective_kinematic_viscosity, psi_one_derivatives,
                 psi_two_derivatives, effective_kinematic_viscosity_derivatives);
 
             // calculating primal damping matrix scalar derivatives

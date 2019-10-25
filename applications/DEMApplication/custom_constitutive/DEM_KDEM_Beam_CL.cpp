@@ -235,13 +235,11 @@ namespace Kratos {
         const double MomentOfInertiaY = std::max(element->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2], neighbor->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2]);
         const double MomentOfInertiaZ = std::max(element->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0], neighbor->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0]);
 
-        // const double element_mass = element->GetDensity() * element->GetProperties()[BEAM_DISTANCE] * element->GetProperties()[BEAM_CROSS_SECTION];
-
         double norm_distance = (element->GetRadius() + neighbor->GetRadius()) / distance; // If spheres are not tangent the Damping coefficient, DeltaRotatedAngle and DeltaAngularVelocity have to be normalized
 
-        const double auxX = 0.5 * element->GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Y] * element->GetProperties()[BEAM_MASS] / MomentOfInertiaX;
-        const double auxY = 0.5 * element->GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Z] * element->GetProperties()[BEAM_MASS] / MomentOfInertiaY;
-        const double auxZ = 0.5 * element->GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_X] * element->GetProperties()[BEAM_MASS] / MomentOfInertiaZ;
+        const double auxX = 0.5 * element->GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Y] * element->GetProperties()[BEAM_MASS] * norm_distance / MomentOfInertiaX;
+        const double auxY = 0.5 * element->GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Z] * element->GetProperties()[BEAM_MASS] * norm_distance / MomentOfInertiaY;
+        const double auxZ = 0.5 * element->GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_X] * element->GetProperties()[BEAM_MASS] * norm_distance / MomentOfInertiaZ;
 
         const double equiv_shear   = equiv_young / (2.0 * (1 + equiv_poisson));
 
@@ -253,18 +251,16 @@ namespace Kratos {
         const double other_gamma = neighbor->GetProperties()[DAMPING_GAMMA];
         const double equiv_gamma = 0.5 * (my_gamma + other_gamma);
 
-        // double norm_distance_torsion = 2.0 / (element->GetRadius() + neighbor->GetRadius());
-
-        const double k_rot_x = equiv_young * Inertia_Ix / distance;
-        const double k_rot_y = equiv_young * Inertia_Iy / distance;
+        const double k_rot_x = equiv_young * Inertia_Ix * norm_distance / distance;
+        const double k_rot_y = equiv_young * Inertia_Iy * norm_distance / distance;
         const double k_tor   = equiv_shear * Inertia_J  / distance;
 
-        const double visc_param_rot_x = 2.0 * equiv_gamma * auxX * sqrt(MomentOfInertiaX * k_rot_x);// * norm_distance;
-        const double visc_param_rot_y = 2.0 * equiv_gamma * auxY * sqrt(MomentOfInertiaY * k_rot_y);// * norm_distance;
-        const double visc_param_tor   = 2.0 * equiv_gamma * auxZ * sqrt(MomentOfInertiaZ * k_tor  );// * norm_distance_torsion;
+        const double visc_param_rot_x = 2.0 * equiv_gamma * auxX * sqrt(MomentOfInertiaX * k_rot_x);
+        const double visc_param_rot_y = 2.0 * equiv_gamma * auxY * sqrt(MomentOfInertiaY * k_rot_y);
+        const double visc_param_tor   = 2.0 * equiv_gamma * auxZ * sqrt(MomentOfInertiaZ * k_tor  );
 
-        ElasticLocalRotationalMoment[0] = -k_rot_x * LocalDeltaRotatedAngle[0] * norm_distance;
-        ElasticLocalRotationalMoment[1] = -k_rot_y * LocalDeltaRotatedAngle[1] * norm_distance;
+        ElasticLocalRotationalMoment[0] = -k_rot_x * LocalDeltaRotatedAngle[0];
+        ElasticLocalRotationalMoment[1] = -k_rot_y * LocalDeltaRotatedAngle[1];
         ElasticLocalRotationalMoment[2] = -k_tor   * LocalDeltaRotatedAngle[2];
 
         ViscoLocalRotationalMoment[0] = -visc_param_rot_x * LocalDeltaAngularVelocity[0];

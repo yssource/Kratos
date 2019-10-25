@@ -448,8 +448,8 @@ bool NitinolPseudoElasticity3D<TElasticBehaviourLaw>::Has(const Variable<double>
 /***********************************************************************************/
 /***********************************************************************************/
 
-template <class TConstLawIntegratorType>
-double& GenericSmallStrainIsotropicPlasticity<TConstLawIntegratorType>::GetValue(
+template <class TElasticBehaviourLaw>
+double& NitinolPseudoElasticity3D<TElasticBehaviourLaw>::GetValue(
     const Variable<double>& rThisVariable,
     double& rValue
     )
@@ -518,7 +518,7 @@ double& NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateValue(
     )
 {
     if (rThisVariable == MARTENSITE_PERCENTAGE) {
-        this->GetValue(rThisVariable, rValue)
+		this->GetValue(rThisVariable, rValue);
     } else {
         return BaseType::CalculateValue(rParameterValues, rThisVariable, rValue);
     }

@@ -229,7 +229,35 @@ BackwardTransformation(
     const bool SaveInternalVars
     )
 {
-    
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    const double Ea = r_material_properties[AUSTENITIC_YOUNG_MODULUS];
+    const double Em = r_material_properties[MARTENSITIC_YOUNG_MODULUS];
+    const double E  = Ea * Em / (Em + (mMartensitePercentage * (Ea - Em)));
+    const double NU = r_material_properties[POISSON_RATIO];
+    const double bulk_mod  = E / (3.0 * (1.0 - (2 * NU)));
+    const double shear_mod = E / (2.0 * (1.0 + NU));
+    const double yield_start_forward   = r_material_properties[YIELD_STRESS_START_FORWARD_TRANSFORMATION];
+    const double max_residual_strain   = r_material_properties[MAXIMUN_RESIDUAL_STRAIN];
+    const double yield_start_backwards = r_material_properties[YIELD_STRESS_START_BACKWARDS_TRANSFORMATION];
+    const double yield_end_backwards   = r_material_properties[YIELD_STRESS_END_BACKWARDS_TRANSFORMATION];
+    const double slope_backwards = (yield_start_backwards - yield_end_backwards) / max_residual_strain;
+    const double yield_compression_start_forward = r_material_properties[YIELD_STRESS_COMPRESSION_START_FORWARD_TRANSFORMATION];
+    const double alpha = (yield_compression_start_forward - yield_start_forward) / (yield_start_forward + yield_compression_start_forward);
+
+    const double transformation_consistency_factor = YieldCondition / (9.0 * std::pow(alpha, 2) * bulk_mod + 3.0 * shear_mod + slope_backwards);
+    double updated_martensite_percentage = mMartensitePercentage + transformation_consistency_factor / max_residual_strain;
+    updated_martensite_percentage  = (updated_martensite_percentage <= tolerance) ? 0.0 : updated_martensite_percentage;
+    const Vector flow_vector = mTransformationStrain / norm_2(mTransformationStrain);
+    const Vector updated_transformation_strain = mTransformationStrain + transformation_consistency_factor * std::sqrt(1.5) * flow_vector;
+
+    if (SaveInternalVars) {
+        mMartensitePercentage = updated_martensite_percentage;
+        mTransformationStrain = updated_transformation_strain;
+    }
+
+    Matrix updated_pseudo_elastic_matrix;
+    this->CalculatePseudoElasticMatrix(updated_pseudo_elastic_matrix, rValues, updated_martensite_percentage);
+    rStressVector -= prod(updated_pseudo_elastic_matrix, updated_transformation_strain);
 }
 /***********************************************************************************/
 /***********************************************************************************/

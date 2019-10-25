@@ -240,7 +240,8 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         const double YieldCondition,
         ConstitutiveLaw::Parameters &rValues,
         const bool SaveInternalVars,
-        const bool IsLoading);
+        const bool IsLoading,
+        const array_1d<double, VoigtSize>& rDeviator);
 
     void ForwardTransformation(
         const double YieldCondition,

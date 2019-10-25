@@ -137,6 +137,11 @@ CalculateMaterialResponseCauchy(
 
         if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
             this->CalculateTangentTensor(rValues); // this modifies the ConstitutiveMatrix
+            const bool check_analytical_tensor = false;
+            Matrix analytical_tensor(VoigtSize, VoigtSize);
+            if (check_analytical_tensor)
+                this->CalculateAnalyticalTensor(rValues, is_loading, stress_deviator, yield_condition, r_constitutive_matrix, analytical_tensor);
+            // KRATOS_WATCH(analytical_tensor)
         }
     }
 }
@@ -144,6 +149,63 @@ CalculateMaterialResponseCauchy(
 /***********************************************************************************/
 /***********************************************************************************/
 
+template <class TElasticBehaviourLaw>
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateAnalyticalTensor(
+    ConstitutiveLaw::Parameters& rValues,
+    const bool IsLoading,
+    const array_1d<double, VoigtSize>& rDeviator,
+    const double YieldCondition,
+    const Matrix& rPseudoElasticMatrix,
+    Matrix& rAnalyticalTensor
+    )
+{
+    if (rAnalyticalTensor.size1() != VoigtSize)
+        rAnalyticalTensor.resize(VoigtSize, VoigtSize);
+    array_1d<double, VoigtSize> identity_vector;
+    ConstitutiveLawUtilities<VoigtSize>::CalculateFirstVector(identity_vector);
+
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    const double Ea = r_material_properties[AUSTENITIC_YOUNG_MODULUS];
+    const double Em = r_material_properties[MARTENSITIC_YOUNG_MODULUS];
+    const double E  = Ea * Em / (Em + (mMartensitePercentage * (Ea - Em)));
+    const double NU = r_material_properties[POISSON_RATIO];
+    const double bulk_mod  = E / (3.0 * (1.0 - (2 * NU)));
+    const double shear_mod = E / (2.0 * (1.0 + NU));
+    const double max_residual_strain = r_material_properties[MAXIMUN_RESIDUAL_STRAIN];
+    const double yield_start_forward = r_material_properties[YIELD_STRESS_START_FORWARD_TRANSFORMATION];
+    const double yield_compression_start_forward = r_material_properties[YIELD_STRESS_COMPRESSION_START_FORWARD_TRANSFORMATION];
+    const double alpha = (yield_compression_start_forward - yield_start_forward) / (yield_start_forward + yield_compression_start_forward);
+    const Matrix identity_matrix = IdentityMatrix(VoigtSize);
+    Matrix aux_correction(VoigtSize, VoigtSize);
+
+    if (IsLoading) {
+        const double yield_end_forward   = r_material_properties[YIELD_STRESS_END_FORWARD_TRANSFORMATION];
+        const double slope_forward = (yield_end_forward - yield_start_forward) / max_residual_strain;
+        const double transformation_consistency_factor = YieldCondition / (9.0 * std::pow(alpha, 2) * bulk_mod + 3.0 * shear_mod + slope_forward);
+        const Vector aux_vector = std::sqrt(1.5) * rDeviator / norm_2(rDeviator) + alpha * identity_vector;
+        const Vector flow_vector = aux_vector / norm_2(aux_vector);
+        const double aux_D = (9.0 * std::pow(alpha, 2) * bulk_mod + 3.0 * shear_mod + slope_forward);
+        noalias(aux_correction) = (identity_matrix - (1.0 / 3.0) * outer_prod(identity_vector, identity_vector)) - outer_prod(flow_vector, flow_vector);
+        const Matrix correction = transformation_consistency_factor * 4.0 * std::pow(shear_mod, 2) * std::sqrt(1.5) * (1.0 / norm_2(rDeviator)) * aux_correction;
+        const Vector CE_derivF = alpha * bulk_mod * identity_vector + 2.0 * shear_mod * std::sqrt(1.5) * flow_vector;
+        noalias(rAnalyticalTensor) = rPseudoElasticMatrix - (1 / aux_D) * outer_prod(CE_derivF, CE_derivF) - correction;
+    } else {
+        const double yield_end_backward   = r_material_properties[YIELD_STRESS_END_BACKWARDS_TRANSFORMATION];
+        const double yield_start_backward   = r_material_properties[YIELD_STRESS_START_BACKWARDS_TRANSFORMATION];
+        const double slope_backward = (yield_start_backward - yield_end_backward) / max_residual_strain;
+        const double transformation_consistency_factor = YieldCondition / (9.0 * std::pow(alpha, 2) * bulk_mod + 3.0 * shear_mod + slope_backward);
+        const Vector flow_vector = mTransformationStrain / norm_2(mTransformationStrain);
+        const double aux_D = (9.0 * std::pow(alpha, 2) * bulk_mod + 3.0 * shear_mod + slope_backward);
+        noalias(aux_correction) = (identity_matrix - (1.0 / 3.0) * outer_prod(identity_vector, identity_vector)) - outer_prod(flow_vector, flow_vector);
+        const Matrix correction = transformation_consistency_factor * 4.0 * std::pow(shear_mod, 2) * std::sqrt(1.5) * (1.0 / norm_2(rDeviator)) * aux_correction;
+        const Vector CE_derivF = alpha * bulk_mod * identity_vector + 2.0 * shear_mod * std::sqrt(1.5) * flow_vector;
+        noalias(rAnalyticalTensor) = rPseudoElasticMatrix - (1 / aux_D) * outer_prod(CE_derivF, CE_derivF) - correction;
+    }
+}
+
+
+/***********************************************************************************/
+/***********************************************************************************/
 template <class TElasticBehaviourLaw>
 void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateTangentTensor(ConstitutiveLaw::Parameters& rValues)
 {
@@ -166,8 +228,7 @@ void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateTangentTensor(Con
 /***********************************************************************************/
 
 template <class TElasticBehaviourLaw>
-void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::
-IntegrateStressVector(
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::IntegrateStressVector(
     array_1d<double, VoigtSize>& rStressVector,
     const double YieldCondition,
     ConstitutiveLaw::Parameters& rValues,
@@ -199,8 +260,7 @@ IntegrateStressVector(
 /***********************************************************************************/
 
 template <class TElasticBehaviourLaw>
-void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::
-ForwardTransformation(
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::ForwardTransformation(
     const double YieldCondition,
     ConstitutiveLaw::Parameters& rValues,
     array_1d<double, VoigtSize>& rStressVector,
@@ -246,8 +306,7 @@ ForwardTransformation(
 /***********************************************************************************/
 
 template <class TElasticBehaviourLaw>
-void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::
-BackwardTransformation(
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::BackwardTransformation(
     const double YieldCondition,
     ConstitutiveLaw::Parameters& rValues,
     array_1d<double, VoigtSize>& rStressVector,
@@ -368,10 +427,6 @@ FinalizeMaterialResponseCauchy(
         bool save_internal_vars = true;
         this->IntegrateStressVector(predictive_stress_vector, yield_condition, rValues, save_internal_vars, is_loading, stress_deviator);
         r_integrated_stress_vector = predictive_stress_vector;
-
-        if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
-            this->CalculateTangentTensor(rValues); // this modifies the ConstitutiveMatrix
-        }
         mPreviousStrain = r_strain_vector;
     }
 }

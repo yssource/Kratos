@@ -267,6 +267,14 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         const Variable<double> &rThisVariable,
         double &rValue);
 
+    void CalculateAnalyticalTensor(
+        ConstitutiveLaw::Parameters &rValues,
+        const bool IsLoading,
+        const array_1d<double, VoigtSize> &rDeviator,
+        const double YieldCondition,
+        const Matrix &rPseudoElasticMatrix,
+        Matrix &rAnalyticalTensor);
+
     ///@}
     ///@name Access
     ///@{

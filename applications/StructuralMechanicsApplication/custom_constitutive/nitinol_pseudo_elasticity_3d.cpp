@@ -15,6 +15,7 @@
 // Project includes
 #include "custom_constitutive/nitinol_pseudo_elasticity_3d.h"
 #include "structural_mechanics_application_variables.h"
+#include "custom_utilities/tangent_operator_calculator_utility.h"
 
 namespace Kratos
 {
@@ -131,9 +132,34 @@ CalculateMaterialResponseCauchy(
         const double threshold = this->CalculateThreshold(rValues, is_loading);
         const double yield_condition = uniaxial_stress - threshold;
         bool save_internal_vars = false;
-		this->IntegrateStressVector(predictive_stress_vector, yield_condition, rValues, save_internal_vars, is_loading, stress_deviator);
-    }
+        this->IntegrateStressVector(predictive_stress_vector, yield_condition, rValues, save_internal_vars, is_loading, stress_deviator);
+        r_integrated_stress_vector = predictive_stress_vector;
 
+        if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
+            this->CalculateTangentTensor(rValues); // this modifies the ConstitutiveMatrix
+        }
+    }
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateTangentTensor(ConstitutiveLaw::Parameters& rValues)
+{
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    const bool consider_perturbation_threshold = r_material_properties.Has(CONSIDER_PERTURBATION_THRESHOLD) ? r_material_properties[CONSIDER_PERTURBATION_THRESHOLD] : true;
+    const TangentOperatorEstimation tangent_operator_estimation = r_material_properties.Has(TANGENT_OPERATOR_ESTIMATION) ? static_cast<TangentOperatorEstimation>(r_material_properties[TANGENT_OPERATOR_ESTIMATION]) : TangentOperatorEstimation::SecondOrderPerturbation;
+
+    if (tangent_operator_estimation == TangentOperatorEstimation::Analytic) {
+        KRATOS_ERROR << "Analytic solution not available" << std::endl;
+    } else if (tangent_operator_estimation == TangentOperatorEstimation::FirstOrderPerturbation) {
+        // Calculates the Tangent Constitutive Tensor by perturbation (first order)
+        TangentOperatorCalculatorUtility::CalculateTangentTensor(rValues, this, ConstitutiveLaw::StressMeasure_Cauchy, consider_perturbation_threshold, 1);
+    } else if (tangent_operator_estimation == TangentOperatorEstimation::SecondOrderPerturbation) {
+        // Calculates the Tangent Constitutive Tensor by perturbation (second order)
+        TangentOperatorCalculatorUtility::CalculateTangentTensor(rValues, this, ConstitutiveLaw::StressMeasure_Cauchy, consider_perturbation_threshold, 2);
+    }
 }
 
 /***********************************************************************************/
@@ -304,10 +330,49 @@ FinalizeMaterialResponseCauchy(
     ConstitutiveLaw::Parameters& rValues
     )
 {
+    Vector& r_integrated_stress_vector = rValues.GetStressVector();
+    Matrix& r_tangent_tensor = rValues.GetConstitutiveMatrix();
+    const Flags& r_constitutive_law_options = rValues.GetOptions();
 
+    // We get the strain vector
+    Vector& r_strain_vector = rValues.GetStrainVector();
 
+    //NOTE: SINCE THE ELEMENT IS IN SMALL STRAINS WE CAN USE ANY STRAIN MEASURE. HERE EMPLOYING THE CAUCHY_GREEN
+    if (r_constitutive_law_options.IsNot(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN)) {
+        this->CalculateValue(rValues, STRAIN, r_strain_vector);
+    }
 
+    // Elastic Matrix C0
+    Matrix r_constitutive_matrix;
+    if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
+        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues, mMartensitePercentage);
+    }
 
+    if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_STRESS)) {
+        // Elastic Matrix
+        r_constitutive_matrix = rValues.GetConstitutiveMatrix();
+        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues, mMartensitePercentage);
+
+        if (r_constitutive_law_options.IsNot(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN)) {
+            BaseType::CalculateCauchyGreenStrain( rValues, r_strain_vector);
+        }
+
+        // S0 = C:(E-Ep)
+        array_1d<double, VoigtSize> predictive_stress_vector = prod(r_constitutive_matrix, r_strain_vector - mTransformationStrain);
+        array_1d<double, VoigtSize> stress_deviator;
+        bool is_loading;
+        this->CheckIfLoading(r_constitutive_matrix, r_strain_vector, is_loading);
+        const double uniaxial_stress = this->CalculatePseudoDruckerPragerUniaxialStress(predictive_stress_vector, rValues, stress_deviator);
+        const double threshold = this->CalculateThreshold(rValues, is_loading);
+        const double yield_condition = uniaxial_stress - threshold;
+        bool save_internal_vars = true;
+        this->IntegrateStressVector(predictive_stress_vector, yield_condition, rValues, save_internal_vars, is_loading, stress_deviator);
+        r_integrated_stress_vector = predictive_stress_vector;
+
+        if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
+            this->CalculateTangentTensor(rValues); // this modifies the ConstitutiveMatrix
+        }
+    }
 }
 
 /***********************************************************************************/

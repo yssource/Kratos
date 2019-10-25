@@ -257,6 +257,8 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         const array_1d<double, VoigtSize> &rDeviator,
         const bool SaveInternalVars);
 
+    void CalculateTangentTensor(ConstitutiveLaw::Parameters &rValues);
+
     ///@}
     ///@name Access
     ///@{

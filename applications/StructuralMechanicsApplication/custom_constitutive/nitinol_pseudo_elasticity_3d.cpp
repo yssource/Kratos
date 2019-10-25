@@ -423,6 +423,7 @@ FinalizeMaterialResponseCauchy(
         const double uniaxial_stress = this->CalculatePseudoDruckerPragerUniaxialStress(predictive_stress_vector, rValues, stress_deviator);
         const double threshold = this->CalculateThreshold(rValues, is_loading);
         const double yield_condition = uniaxial_stress - threshold;
+
         bool save_internal_vars = true;
         this->IntegrateStressVector(predictive_stress_vector, yield_condition, rValues, save_internal_vars, is_loading, stress_deviator);
         r_integrated_stress_vector = predictive_stress_vector;

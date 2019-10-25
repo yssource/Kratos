@@ -110,13 +110,13 @@ CalculateMaterialResponseCauchy(
     // Elastic Matrix C0
     Matrix r_constitutive_matrix;
     if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
-        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues);
+        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues, mMartensitePercentage);
     }
 
     if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_STRESS)) {
         // Elastic Matrix
         r_constitutive_matrix = rValues.GetConstitutiveMatrix();
-        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues);
+        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues, mMartensitePercentage);
 
         if (r_constitutive_law_options.IsNot(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN)) {
             BaseType::CalculateCauchyGreenStrain( rValues, r_strain_vector);
@@ -182,7 +182,38 @@ ForwardTransformation(
     const bool SaveInternalVars
     )
 {
+    array_1d<double, VoigtSize> identity_vector;
+    ConstitutiveLawUtilities<VoigtSize>::CalculateFirstVector(identity_vector);
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    const double Ea = r_material_properties[AUSTENITIC_YOUNG_MODULUS];
+    const double Em = r_material_properties[MARTENSITIC_YOUNG_MODULUS];
+    const double E  = Ea * Em / (Em + (mMartensitePercentage * (Ea - Em)));
+    const double NU = r_material_properties[POISSON_RATIO];
+    const double bulk_mod  = E / (3.0 * (1.0 - (2 * NU)));
+    const double shear_mod = E / (2.0 * (1.0 + NU));
+    const double max_residual_strain = r_material_properties[MAXIMUN_RESIDUAL_STRAIN];
+    const double yield_start_forward = r_material_properties[YIELD_STRESS_START_FORWARD_TRANSFORMATION];
+    const double yield_end_forward   = r_material_properties[YIELD_STRESS_END_FORWARD_TRANSFORMATION];
+    const double slope_forward = (yield_end_forward - yield_start_forward) / max_residual_strain;
+    const double yield_compression_start_forward = r_material_properties[YIELD_STRESS_COMPRESSION_START_FORWARD_TRANSFORMATION];
+    const double alpha = (yield_compression_start_forward - yield_start_forward) / (yield_start_forward + yield_compression_start_forward);
 
+    const double transformation_consistency_factor = YieldCondition / (9.0 * std::pow(alpha, 2) * bulk_mod + 3.0 * shear_mod + slope_forward);
+    const Vector aux_vector = std::sqrt(1.5) * rDeviator / norm_2(rDeviator) + alpha * identity_vector;
+    const Vector flow_vector = aux_vector / norm_2(aux_vector);
+
+    double updated_martensite_percentage = mMartensitePercentage + transformation_consistency_factor / max_residual_strain;
+    updated_martensite_percentage  = (updated_martensite_percentage >= 1.0) ? 1.0 : updated_martensite_percentage;
+    const Vector updated_transformation_strain = mTransformationStrain + transformation_consistency_factor * std::sqrt(1.5) * flow_vector;
+
+    if (SaveInternalVars) {
+        mMartensitePercentage = updated_martensite_percentage;
+        mTransformationStrain = updated_transformation_strain;
+    }
+
+    Matrix updated_pseudo_elastic_matrix;
+    this->CalculatePseudoElasticMatrix(updated_pseudo_elastic_matrix, rValues, updated_martensite_percentage);
+    rStressVector -= prod(updated_pseudo_elastic_matrix, updated_transformation_strain);
 }
 
 /***********************************************************************************/
@@ -304,13 +335,14 @@ int NitinolPseudoElasticity3D<TElasticBehaviourLaw>::Check(
 template <class TElasticBehaviourLaw>
 void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculatePseudoElasticMatrix(
     Matrix& rConstitutiveMatrix,
-    ConstitutiveLaw::Parameters& rValues
+    ConstitutiveLaw::Parameters& rValues,
+    const double MartensitePercentage
     )
 {
     const Properties& r_material_properties = rValues.GetMaterialProperties();
     const double Ea = r_material_properties[AUSTENITIC_YOUNG_MODULUS];
     const double Em = r_material_properties[MARTENSITIC_YOUNG_MODULUS];
-    const double E = Ea * Em / (Em + (mMartensitePercentage * (Ea - Em)));
+    const double E = Ea * Em / (Em + (MartensitePercentage * (Ea - Em)));
     const double NU = r_material_properties[POISSON_RATIO];
 
     this->CheckClearElasticMatrix(rConstitutiveMatrix);

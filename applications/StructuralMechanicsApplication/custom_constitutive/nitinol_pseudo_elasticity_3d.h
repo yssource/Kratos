@@ -215,7 +215,10 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         const ProcessInfo& rCurrentProcessInfo
         ) override;
 
-    void CalculatePseudoElasticMatrix(Matrix &rConstitutiveMatrix, ConstitutiveLaw::Parameters& rParameterValues);
+    void CalculatePseudoElasticMatrix(
+      Matrix &rConstitutiveMatrix, 
+      ConstitutiveLaw::Parameters& rParameterValues,
+      const double MartensitePercentage);
 
     void CheckIfLoading(
         const Matrix &rPseudoElasticMatrix,
@@ -252,7 +255,7 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         array_1d<double, VoigtSize> &rStressVector,
         const array_1d<double, VoigtSize> &rDeviator,
         const bool SaveInternalVars);
-        
+
     ///@}
     ///@name Access
     ///@{

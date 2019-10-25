@@ -372,7 +372,36 @@ FinalizeMaterialResponseCauchy(
         if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
             this->CalculateTangentTensor(rValues); // this modifies the ConstitutiveMatrix
         }
+        mPreviousStrain = r_strain_vector;
     }
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+bool NitinolPseudoElasticity3D<TElasticBehaviourLaw>::Has(const Variable<double>& rThisVariable)
+{
+    if (rThisVariable == MARTENSITE_PERCENTAGE) {
+        return true;
+    } else {
+        return BaseType::Has(rThisVariable);
+    }
+    return false;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+bool NitinolPseudoElasticity3D<TElasticBehaviourLaw>::Has(const Variable<Vector>& rThisVariable)
+{
+    if (rThisVariable == TRANSFORMATION_STRAIN) {
+        return true;
+    } else {
+        return BaseType::Has(rThisVariable);
+    }
+    return BaseType::Has(rThisVariable);
 }
 
 /***********************************************************************************/
@@ -385,7 +414,11 @@ Vector& NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateValue(
     Vector& rValue
     )
 {
-    return BaseType::CalculateValue(rParameterValues, rThisVariable, rValue);
+    if (rThisVariable == TRANSFORMATION_STRAIN) {
+        rValue = mTransformationStrain;
+    } else {
+        return BaseType::CalculateValue(rParameterValues, rThisVariable, rValue);
+    }
 }
 
 /***********************************************************************************/
@@ -398,13 +431,7 @@ Matrix& NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateValue(
     Matrix& rValue
     )
 {
-    // if (rThisVariable == INTEGRATED_STRESS_TENSOR) {
-    //     rValue = MathUtils<double>::StressVectorToTensor(this->GetPreviousStressVector());
-    // } else {
-    //     rValue = BaseType::CalculateValue(rParameterValues, rThisVariable, rValue);
-    // }
-
-    return rValue;
+    return BaseType::CalculateValue(rParameterValues, rThisVariable, rValue);
 }
 
 /***********************************************************************************/

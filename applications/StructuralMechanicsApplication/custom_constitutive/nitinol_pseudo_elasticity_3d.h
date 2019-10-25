@@ -259,6 +259,9 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
 
     void CalculateTangentTensor(ConstitutiveLaw::Parameters &rValues);
 
+    bool Has(const Variable<double> &rThisVariable);
+    bool Has(const Variable<Vector> &rThisVariable);
+
     ///@}
     ///@name Access
     ///@{

@@ -438,6 +438,22 @@ Matrix& NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateValue(
 /***********************************************************************************/
 
 template <class TElasticBehaviourLaw>
+double& NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateValue(
+    ConstitutiveLaw::Parameters& rParameterValues,
+    const Variable<double>& rThisVariable,
+    double& rValue
+    )
+{
+    if (rThisVariable == MARTENSITE_PERCENTAGE) {
+        return mMartensitePercentage;
+    } else {
+        return BaseType::CalculateValue(rParameterValues, rThisVariable, rValue);
+    }
+}
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
 int NitinolPseudoElasticity3D<TElasticBehaviourLaw>::Check(
     const Properties& rMaterialProperties,
     const GeometryType& rElementGeometry,

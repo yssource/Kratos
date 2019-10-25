@@ -262,6 +262,11 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
     bool Has(const Variable<double> &rThisVariable);
     bool Has(const Variable<Vector> &rThisVariable);
 
+    double &CalculateValue(
+        ConstitutiveLaw::Parameters &rParameterValues,
+        const Variable<double> &rThisVariable,
+        double &rValue);
+
     ///@}
     ///@name Access
     ///@{

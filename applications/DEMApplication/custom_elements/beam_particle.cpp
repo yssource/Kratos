@@ -61,6 +61,7 @@ namespace Kratos {
         SphericContinuumParticle::Initialize(r_process_info);
 
         double distance = GetProperties()[BEAM_DISTANCE];
+        double norm_distance = 2.0 * GetRadius() / distance;
 
         if (distance)
         {

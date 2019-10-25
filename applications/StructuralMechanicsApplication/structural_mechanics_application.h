@@ -107,6 +107,7 @@
 #include "custom_constitutive/small_strain_isotropic_damage_traction_only_3d.h"
 #include "custom_constitutive/plane_stress_d_plus_d_minus_damage_masonry_2d.h"
 #include "custom_constitutive/d_plus_d_minus_damage_masonry_3d.h"
+#include "custom_constitutive/nitinol_pseudo_elasticity_3d.h"
 
 // Advanced Constitutive laws
 #include "custom_constitutive/small_strain_isotropic_plasticity_factory.h"
@@ -865,6 +866,7 @@ private:
     const GenericSmallStrainOrthotropicDamage<GenericConstitutiveLawIntegratorDamage<ModifiedMohrCoulombYieldSurface<VonMisesPlasticPotential<3>>>> mSmallStrainOrthotropicDamageModifiedMohrCoulomb2D;
     const GenericSmallStrainOrthotropicDamage<GenericConstitutiveLawIntegratorDamage<SimoJuYieldSurface<VonMisesPlasticPotential<3>>>> mSmallStrainOrthotropicDamageSimoJu2D;
 
+    const NitinolPseudoElasticity3D<ElasticIsotropic3D> mNitinolPseudoElasticity3D;
     ///@}
     ///@name Private Operators
     ///@{

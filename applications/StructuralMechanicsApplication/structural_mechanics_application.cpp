@@ -1026,5 +1026,8 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_CONSTITUTIVE_LAW("SmallStrainOrthotropicDamageModifiedMohrCoulomb2D", mSmallStrainOrthotropicDamageModifiedMohrCoulomb2D);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("SmallStrainOrthotropicDamageSimoJu2D", mSmallStrainOrthotropicDamageSimoJu2D);
 
+    // Nitinol CL
+    KRATOS_REGISTER_CONSTITUTIVE_LAW("NitinolPseudoElasticity3D", mNitinolPseudoElasticity3D);
+
 }
 }  // namespace Kratos.

@@ -60,6 +60,7 @@
 #include "custom_constitutive/d_plus_d_minus_damage_masonry_3d.h"
 #include "custom_constitutive/generic_small_strain_plastic_damage_model.h"
 #include "custom_constitutive/generic_small_strain_orthotropic_damage.h"
+#include "custom_constitutive/nitinol_pseudo_elasticity_3d.h"
 
 // Integrators
 #include "custom_constitutive/constitutive_laws_integrators/generic_constitutive_law_integrator_damage.h"
@@ -207,6 +208,9 @@ void  AddCustomConstitutiveLawsToPython(pybind11::module& m)
     (m,"ViscousGeneralizedMaxwell3D").def(py::init<>())
     ;
 
+    py::class_< NitinolPseudoElasticity3D<ElasticIsotropic3D>, typename NitinolPseudoElasticity3D<ElasticIsotropic3D>::Pointer,  ConstitutiveLaw  >
+    (m,"NitinolPseudoElasticity3D").def(py::init<>())
+    ;
 
     // Custom Constitutive Laws Registration
     // Isotropic Plasticity

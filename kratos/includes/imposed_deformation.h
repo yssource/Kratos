@@ -755,5 +755,50 @@ private:
     ///@{
 }; // Class ImposedDeformation
 
+///@}
+///@name Type Definitions
+///@{
+///@}
+///@name Input and output
+///@{
+
+/// input stream function
+inline std::istream & operator >>(std::istream& rIStream,
+                                  ImposedDeformation& rThis);
+
+/// output stream function
+
+inline std::ostream & operator <<(std::ostream& rOStream,
+                                  const ImposedDeformation& rThis)
+{
+    rThis.PrintInfo(rOStream);
+    rOStream << " : " << std::endl;
+    rThis.PrintData(rOStream);
+
+    return rOStream;
+}
+
+///@}
+///@} addtogroup block
+
+KRATOS_API_EXTERN template class KRATOS_API(KRATOS_CORE) KratosComponents<ImposedDeformation >;
+KRATOS_API_EXTERN template class KRATOS_API(KRATOS_CORE) KratosComponents<Variable<ImposedDeformation::Pointer> >;
+
+void KRATOS_API(KRATOS_CORE) AddKratosComponent(std::string const& Name, ImposedDeformation const& ThisComponent);
+void KRATOS_API(KRATOS_CORE) AddKratosComponent(std::string const& Name, Variable<ImposedDeformation::Pointer> const& ThisComponent);
+
+/**
+ * Definition of ImposedDeformation variable
+ */
+
+#undef  KRATOS_EXPORT_MACRO
+#define KRATOS_EXPORT_MACRO KRATOS_API
+
+KRATOS_DEFINE_VARIABLE(ImposedDeformation::Pointer, IMPOSED_DEFORMATION)
+
+#undef  KRATOS_EXPORT_MACRO
+#define KRATOS_EXPORT_MACRO KRATOS_NO_EXPORT
+
+
 } // namespace Kratos.
 #endif

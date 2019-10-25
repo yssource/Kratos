@@ -275,6 +275,10 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         const Matrix &rPseudoElasticMatrix,
         Matrix &rAnalyticalTensor);
 
+    double &GetValue(
+        const Variable<double> &rThisVariable,
+        double &rValue);
+
     ///@}
     ///@name Access
     ///@{

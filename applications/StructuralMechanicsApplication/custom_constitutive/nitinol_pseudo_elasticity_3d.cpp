@@ -91,8 +91,7 @@ CalculateMaterialResponseKirchhoff(
 /***********************************************************************************/
 
 template <class TElasticBehaviourLaw>
-void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::
-CalculateMaterialResponseCauchy(
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateMaterialResponseCauchy(
     ConstitutiveLaw::Parameters& rValues
     )
 {
@@ -238,19 +237,19 @@ void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::IntegrateStressVector(
     )
 {
     if (IsLoading) {
-        if (YieldCondition <= tolerance && mMartensitePercentage <= tolerance) {
+        if (YieldCondition <= 0.0 && mMartensitePercentage <= 0.0) {
             return;
-        } else if (YieldCondition > tolerance && mMartensitePercentage >= 0.99) {
+        } else if (YieldCondition > 0.0 && mMartensitePercentage >= 0.99) {
             return;
-        } else if (YieldCondition > tolerance && mMartensitePercentage >= tolerance && mMartensitePercentage < 0.99) {
+        } else if (YieldCondition > 0.0 && mMartensitePercentage >= 0.0 && mMartensitePercentage < 0.99) {
             this->ForwardTransformation(YieldCondition, rValues, rStressVector, rDeviator, SaveInternalVars);
         }
     } else { // unloading
-        if (YieldCondition >= tolerance && mMartensitePercentage >= 0.99) {
+        if (YieldCondition >= 0.0 && mMartensitePercentage >= 0.99) {
             return;
-        } else if (YieldCondition < tolerance && mMartensitePercentage <= tolerance) {
+        } else if (YieldCondition < 0.0 && mMartensitePercentage <= 0.0) {
             return;
-        } else if (YieldCondition < tolerance && mMartensitePercentage > tolerance && mMartensitePercentage <= 0.99) {
+        } else if (YieldCondition < 0.0 && mMartensitePercentage > 0.0 && mMartensitePercentage <= 0.99) {
             this->BackwardTransformation(YieldCondition, rValues, rStressVector, rDeviator, SaveInternalVars);
         }
     }
@@ -331,7 +330,7 @@ void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::BackwardTransformation(
 
     const double transformation_consistency_factor = YieldCondition / (9.0 * std::pow(alpha, 2) * bulk_mod + 3.0 * shear_mod + slope_backwards);
     double updated_martensite_percentage = mMartensitePercentage + transformation_consistency_factor / max_residual_strain;
-    updated_martensite_percentage  = (updated_martensite_percentage <= tolerance) ? 0.0 : updated_martensite_percentage;
+    updated_martensite_percentage  = (updated_martensite_percentage <= 0.0) ? 0.0 : updated_martensite_percentage;
     const Vector flow_vector = mTransformationStrain / norm_2(mTransformationStrain);
     const Vector updated_transformation_strain = mTransformationStrain + transformation_consistency_factor * std::sqrt(1.5) * flow_vector;
 
@@ -445,6 +444,25 @@ bool NitinolPseudoElasticity3D<TElasticBehaviourLaw>::Has(const Variable<double>
     return false;
 }
 
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TConstLawIntegratorType>
+double& GenericSmallStrainIsotropicPlasticity<TConstLawIntegratorType>::GetValue(
+    const Variable<double>& rThisVariable,
+    double& rValue
+    )
+{
+    if (rThisVariable == MARTENSITE_PERCENTAGE) {
+        rValue = mMartensitePercentage;
+    } else {
+        BaseType::GetValue(rThisVariable, rValue);
+    }
+
+    return rValue;
+}
+
 /***********************************************************************************/
 /***********************************************************************************/
 
@@ -500,7 +518,7 @@ double& NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateValue(
     )
 {
     if (rThisVariable == MARTENSITE_PERCENTAGE) {
-        return mMartensitePercentage;
+        this->GetValue(rThisVariable, rValue)
     } else {
         return BaseType::CalculateValue(rParameterValues, rThisVariable, rValue);
     }

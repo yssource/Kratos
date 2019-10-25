@@ -106,13 +106,13 @@ public:
      * @brief This function calculates the elastic part of the total stiffness matrix
      */
     Matrix CreateElementStiffnessMatrix_Material() const;
-    Matrix CreateElementStiffnessMatrixIntermediate() const;
-    Matrix GlobalTangentStiffnessMatrix() const;
+    virtual Matrix CreateElementStiffnessMatrixIntermediate() const;
+    virtual Matrix GlobalTangentStiffnessMatrix() const;
 
     /**
      * @brief This function calculates the current nodal position
      */
-    BoundedVector<double,msLocalSize> GetCurrentNodalPosition() const;
+    virtual BoundedVector<double,msLocalSize> GetCurrentNodalPosition() const;
 
 
     /**
@@ -122,7 +122,7 @@ public:
 
 
     Vector CurrentLocalAxis1() const;
-    Matrix CoRotatingCS() const;
+    virtual Matrix CoRotatingCS() const;
     Vector LocalDeformations() const;
     Matrix LogRotationMatrix(const Matrix& rRotationMatrix) const;
     Matrix SkewSymmetricMatrix(const Vector& rinput_vec) const;
@@ -214,7 +214,7 @@ public:
      */
     double CalculateShearModulus() const;
 
-    Vector CalculateGlobalNodalForces() const;
+    virtual Vector CalculateGlobalNodalForces() const;
 
     Vector GetIncrementDeformation() const;
 

@@ -20,6 +20,7 @@
 // Project includes
 #include "includes/constitutive_law.h"
 #include "custom_constitutive/elastic_isotropic_3d.h"
+#include "custom_utilities/constitutive_law_utilities.h"
 
 namespace Kratos
 {
@@ -214,7 +215,44 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         const ProcessInfo& rCurrentProcessInfo
         ) override;
 
-    void CalculatePseudoElasticMatrix(Matrix &rConstitutiveMatrix);
+    void CalculatePseudoElasticMatrix(Matrix &rConstitutiveMatrix, ConstitutiveLaw::Parameters& rParameterValues);
+
+    void CheckIfLoading(
+        const Matrix &rPseudoElasticMatrix,
+        const Vector &rStrainVector,
+        bool &rIsLoading);
+
+    double CalculatePseudoDruckerPragerUniaxialStress(
+        const array_1d<double, VoigtSize> &rStressVector,
+        ConstitutiveLaw::Parameters &rValues,
+        array_1d<double, VoigtSize>& rDeviator);
+
+    double CalculateThreshold(
+        ConstitutiveLaw::Parameters &rValues,
+        const bool IsLoading);
+
+    void
+    IntegrateStressVector(
+        array_1d<double, VoigtSize> &rStressVector,
+        const double YieldCondition,
+        ConstitutiveLaw::Parameters &rValues,
+        const bool SaveInternalVars,
+        const bool IsLoading);
+
+    void ForwardTransformation(
+        const double YieldCondition,
+        ConstitutiveLaw::Parameters &rValues,
+        array_1d<double, VoigtSize> &rStressVector,
+        const array_1d<double, VoigtSize> &rDeviator,
+        const bool SaveInternalVars);
+
+    void BackwardTransformation(
+        const double YieldCondition,
+        ConstitutiveLaw::Parameters &rValues,
+        array_1d<double, VoigtSize> &rStressVector,
+        const array_1d<double, VoigtSize> &rDeviator,
+        const bool SaveInternalVars);
+        
     ///@}
     ///@name Access
     ///@{
@@ -272,6 +310,7 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
 
     double mMartensitePercentage = 0.0;
     Vector mTransformationStrain = ZeroVector(VoigtSize);
+    Vector mPreviousStrain       = ZeroVector(VoigtSize);
 
     ///@}
     ///@name Private Operators

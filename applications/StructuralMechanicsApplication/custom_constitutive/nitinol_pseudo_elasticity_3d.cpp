@@ -110,11 +110,96 @@ CalculateMaterialResponseCauchy(
     // Elastic Matrix C0
     Matrix r_constitutive_matrix;
     if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
-        this->CalculatePseudoElasticMatrix(r_constitutive_matrix);
+        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues);
+    }
+
+    if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_STRESS)) {
+        // Elastic Matrix
+        r_constitutive_matrix = rValues.GetConstitutiveMatrix();
+        this->CalculatePseudoElasticMatrix(r_constitutive_matrix, rValues);
+
+        if (r_constitutive_law_options.IsNot(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN)) {
+            BaseType::CalculateCauchyGreenStrain( rValues, r_strain_vector);
+        }
+
+        // S0 = C:(E-Ep)
+        array_1d<double, VoigtSize> predictive_stress_vector = prod(r_constitutive_matrix, r_strain_vector - mTransformationStrain);
+        array_1d<double, VoigtSize> stress_deviator;
+        bool is_loading;
+        this->CheckIfLoading(r_constitutive_matrix, r_strain_vector, is_loading);
+        const double uniaxial_stress = this->CalculatePseudoDruckerPragerUniaxialStress(predictive_stress_vector, rValues, stress_deviator);
+        const double threshold = this->CalculateThreshold(rValues, is_loading);
+        const double yield_condition = uniaxial_stress - threshold;
+        bool save_internal_vars = false;
+		this->IntegrateStressVector(predictive_stress_vector, yield_condition, rValues, save_internal_vars, is_loading, stress_deviator);
     }
 
 }
 
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::
+IntegrateStressVector(
+    array_1d<double, VoigtSize>& rStressVector,
+    const double YieldCondition,
+    ConstitutiveLaw::Parameters& rValues,
+    const bool SaveInternalVars,
+    const bool IsLoading,
+    const array_1d<double, VoigtSize>& rDeviator
+    )
+{
+    if (IsLoading) {
+        if (YieldCondition <= tolerance && mMartensitePercentage <= tolerance) {
+            return;
+        } else if (YieldCondition > tolerance && mMartensitePercentage >= 0.99) {
+            return;
+        } else if (YieldCondition > tolerance && mMartensitePercentage >= tolerance && mMartensitePercentage < 0.99) {
+            this->ForwardTransformation(YieldCondition, rValues, rStressVector, rDeviator, SaveInternalVars);
+        }
+    } else { // unloading
+        if (YieldCondition >= tolerance && mMartensitePercentage >= 0.99) {
+            return;
+        } else if (YieldCondition < tolerance && mMartensitePercentage <= tolerance) {
+            return;
+        } else if (YieldCondition < tolerance && mMartensitePercentage > tolerance && mMartensitePercentage <= 0.99) {
+            this->BackwardTransformation(YieldCondition, rValues, rStressVector, rDeviator, SaveInternalVars);
+        }
+    }
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::
+ForwardTransformation(
+    const double YieldCondition,
+    ConstitutiveLaw::Parameters& rValues,
+    array_1d<double, VoigtSize>& rStressVector,
+    const array_1d<double, VoigtSize>& rDeviator,
+    const bool SaveInternalVars
+    )
+{
+
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::
+BackwardTransformation(
+    const double YieldCondition,
+    ConstitutiveLaw::Parameters& rValues,
+    array_1d<double, VoigtSize>& rStressVector,
+    const array_1d<double, VoigtSize>& rDeviator,
+    const bool SaveInternalVars
+    )
+{
+    
+}
 /***********************************************************************************/
 /***********************************************************************************/
 
@@ -217,12 +302,15 @@ int NitinolPseudoElasticity3D<TElasticBehaviourLaw>::Check(
 /***********************************************************************************/
 
 template <class TElasticBehaviourLaw>
-void NitinolPseudoElasticity3D::CalculatePseudoElasticMatrix(
-    Matrix& rConstitutiveMatrix
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculatePseudoElasticMatrix(
+    Matrix& rConstitutiveMatrix,
+    ConstitutiveLaw::Parameters& rValues
     )
 {
     const Properties& r_material_properties = rValues.GetMaterialProperties();
-    const double E = r_material_properties[YOUNG_MODULUS];
+    const double Ea = r_material_properties[AUSTENITIC_YOUNG_MODULUS];
+    const double Em = r_material_properties[MARTENSITIC_YOUNG_MODULUS];
+    const double E = Ea * Em / (Em + (mMartensitePercentage * (Ea - Em)));
     const double NU = r_material_properties[POISSON_RATIO];
 
     this->CheckClearElasticMatrix(rConstitutiveMatrix);
@@ -246,6 +334,71 @@ void NitinolPseudoElasticity3D::CalculatePseudoElasticMatrix(
     rConstitutiveMatrix( 5, 5 ) = c4;
 }
 
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+void NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CheckIfLoading(
+    const Matrix& rPseudoElasticMatrix, 
+    const Vector& rStrainVector,
+    bool& rIsLoading
+    )
+{
+    const double aux = norm_2(prod(rPseudoElasticMatrix, rStrainVector)) - norm_2(prod(rPseudoElasticMatrix, mPreviousStrain));
+    if (aux < 0.0)
+        rIsLoading = false;
+    else
+        rIsLoading = true; // Todo what if == 0.0
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+double NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculatePseudoDruckerPragerUniaxialStress(
+    const array_1d<double, VoigtSize>& rStressVector,
+    ConstitutiveLaw::Parameters& rValues,
+    array_1d<double, VoigtSize>& rDeviator
+)
+{
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    double I1, J2;
+    array_1d<double, VoigtSize> stress_deviator;
+    ConstitutiveLawUtilities<VoigtSize>::CalculateI1Invariant(rStressVector, I1);
+    ConstitutiveLawUtilities<VoigtSize>::CalculateJ2Invariant(rStressVector, I1, rDeviator, J2);
+
+    const double yield_compression_start_forward = r_material_properties[YIELD_STRESS_COMPRESSION_START_FORWARD_TRANSFORMATION];
+    const double yield_start_forward = r_material_properties[YIELD_STRESS_START_FORWARD_TRANSFORMATION];
+    const double alpha = (yield_compression_start_forward - yield_start_forward) / (yield_start_forward + yield_compression_start_forward);
+
+    return std::sqrt(3.0 * J2) + alpha * I1;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TElasticBehaviourLaw>
+double NitinolPseudoElasticity3D<TElasticBehaviourLaw>::CalculateThreshold(
+    ConstitutiveLaw::Parameters& rValues,
+    const bool IsLoading
+)
+{
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    const double max_residual_strain = r_material_properties[MAXIMUN_RESIDUAL_STRAIN];
+    if (IsLoading) {
+        const double yield_start_forward = r_material_properties[YIELD_STRESS_START_FORWARD_TRANSFORMATION];
+        const double yield_end_forward   = r_material_properties[YIELD_STRESS_END_FORWARD_TRANSFORMATION];
+        const double slope_forward = (yield_end_forward - yield_start_forward) / max_residual_strain;
+        return yield_start_forward + slope_forward * max_residual_strain * mMartensitePercentage;
+    } else {
+        const double yield_start_backwards = r_material_properties[YIELD_STRESS_START_BACKWARDS_TRANSFORMATION];
+        const double yield_end_backwards   = r_material_properties[YIELD_STRESS_END_BACKWARDS_TRANSFORMATION];
+        const double slope_backward = (yield_start_backwards - yield_end_backwards) / max_residual_strain;
+        return yield_end_backwards + slope_backward * max_residual_strain * mMartensitePercentage;
+    }
+}
+/***********************************************************************************/
+/***********************************************************************************/
 
 template class NitinolPseudoElasticity3D<ElasticIsotropic3D>;
 

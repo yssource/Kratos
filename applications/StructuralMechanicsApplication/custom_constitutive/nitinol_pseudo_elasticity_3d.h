@@ -214,6 +214,7 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
         const ProcessInfo& rCurrentProcessInfo
         ) override;
 
+    void CalculatePseudoElasticMatrix(Matrix &rConstitutiveMatrix);
     ///@}
     ///@name Access
     ///@{
@@ -269,7 +270,8 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) NitinolPseudoElasticity3D
     ///@name Member Variables
     ///@{
 
-    // Converged values
+    double mMartensitePercentage = 0.0;
+    Vector mTransformationStrain = ZeroVector(VoigtSize);
 
     ///@}
     ///@name Private Operators

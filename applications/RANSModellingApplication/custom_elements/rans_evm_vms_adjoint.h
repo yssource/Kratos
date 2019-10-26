@@ -378,7 +378,8 @@ protected:
         // depend on the definitions of TauOne and TauTwo and should be consistent
         // with the fluid element used to solve for VELOCITY and PRESSURE.
         BoundedVector<double, TNumNodes> TauOneDeriv;
-        BoundedVector<double, TNumNodes> TauTwoDeriv;
+        // BoundedVector<double, TNumNodes> TauTwoDeriv;
+        TauOneDeriv.clear();
 
         if (VelNorm > 0.0)
         {

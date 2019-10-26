@@ -703,12 +703,14 @@ public:
             const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateEffectiveKinematicViscosityVelocityDerivatives(
-                effective_kinematic_viscosity_derivatives, current_data, rCurrentProcessInfo);
+                effective_kinematic_viscosity_derivatives, current_data,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             const double reaction = this->CalculateReactionTerm(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateReactionTermVelocityDerivatives(
-                reaction_derivatives, current_data, rCurrentProcessInfo);
+                reaction_derivatives, current_data, gauss_shape_functions,
+                r_shape_derivatives, rCurrentProcessInfo);
 
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -738,7 +740,8 @@ public:
             const double source = this->CalculateSourceTerm(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateSourceTermVelocityDerivatives(
-                source_derivatives, current_data, rCurrentProcessInfo);
+                source_derivatives, current_data, gauss_shape_functions,
+                r_shape_derivatives, rCurrentProcessInfo);
 
             const double velocity_dot_primal_variable_gradient =
                 inner_prod(velocity, primal_variable_gradient);
@@ -1102,6 +1105,8 @@ public:
         BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -1139,6 +1144,8 @@ public:
         BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -1166,15 +1173,20 @@ public:
      *
      * This method should be implemented by the derrived class.
      *
-     * @param rOutput              Output vector containing partial derivatives for each node
-     * @param rDerivativeVariable  Derivative variable (i.e. $w$)
-     * @param rCurrentData         Data required to calculate partial derivatives
+     * @param rOutput                      Output vector containing partial derivatives for each node
+     * @param rDerivativeVariable          Derivative variable (i.e. $w$)
+     * @param rCurrentData                 Data required to calculate partial derivatives
+     * @param rShapeFunctions              Shape functions of the gauss point
+     * @param rShapeFunctionDerivatives    Shape function derivatives of the gauss point
      * @param rCurrentProcessInfo  Current process info
      */
-    virtual void CalculateSourceTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
-                                                      const Variable<double>& rDerivativeVariable,
-                                                      const TElementData& rCurrentData,
-                                                      const ProcessInfo& rCurrentProcessInfo) const
+    virtual void CalculateSourceTermScalarDerivatives(
+        BoundedVector<double, TNumNodes>& rOutput,
+        const Variable<double>& rDerivativeVariable,
+        const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
+        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -1198,13 +1210,17 @@ public:
      *
      * This method should be implemented by the derrived class.
      *
-     * @param rOutput             Output vector containing partial derivatives for each node in rows, and each dimension in columns
-     * @param rCurrentData        Data required to calculate partial derivatives
-     * @param rCurrentProcessInfo Current process info
+     * @param rOutput                      Output vector containing partial derivatives for each node in rows, and each dimension in columns
+     * @param rCurrentData                 Data required to calculate partial derivatives
+     * @param rShapeFunctions              Shape functions of the gauss point
+     * @param rShapeFunctionDerivatives    Shape function derivatives of the gauss point
+     * @param rCurrentProcessInfo          Current process info
      */
     virtual void CalculateEffectiveKinematicViscosityVelocityDerivatives(
         BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -1231,13 +1247,17 @@ public:
      *
      * This method should be implemented by the derrived class.
      *
-     * @param rOutput             Output vector containing partial derivatives for each node in rows, and each dimension in columns
-     * @param rCurrentData        Data required to calculate partial derivatives
-     * @param rCurrentProcessInfo Current process info
+     * @param rOutput                      Output vector containing partial derivatives for each node in rows, and each dimension in columns
+     * @param rCurrentData                 Data required to calculate partial derivatives
+     * @param rShapeFunctions              Shape functions of the gauss point
+     * @param rShapeFunctionDerivatives    Shape function derivatives of the gauss point
+     * @param rCurrentProcessInfo          Current process info
      */
     virtual void CalculateReactionTermVelocityDerivatives(
         BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -1262,13 +1282,17 @@ public:
      *
      * This method should be implemented by the derrived class.
      *
-     * @param rOutput             Output vector containing partial derivatives for each node in rows, and each dimension in columns
-     * @param rCurrentData        Data required to calculate partial derivatives
-     * @param rCurrentProcessInfo Current process info
+     * @param rOutput                      Output vector containing partial derivatives for each node in rows, and each dimension in columns
+     * @param rCurrentData                 Data required to calculate partial derivatives
+     * @param rShapeFunctions              Shape functions of the gauss point
+     * @param rShapeFunctionDerivatives    Shape function derivatives of the gauss point
+     * @param rCurrentProcessInfo          Current process info
      */
     virtual void CalculateSourceTermVelocityDerivatives(
         BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -1290,15 +1314,19 @@ public:
      *
      * This method should be implemented by the derrived class.
      *
-     * @param rCurrentData         Data required to calculate partial derivatives
-     * @param rShapeDerivative     Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
-     * @param detJ_deriv           Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
-     * @param rDN_Dx_deriv         Derivative of shape function gradients w.r.t. $x^c_k$
-     * @param rCurrentProcessInfo  Current process info
-     * @return double              Effective kinematic viscosity shape derivative w.r.t. $x^c_k$
+     * @param rCurrentData                 Data required to calculate partial derivatives
+     * @param rShapeFunctions              Shape functions of the gauss point
+     * @param rShapeFunctionDerivatives    Shape function derivatives of the gauss point
+     * @param rShapeDerivative             Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
+     * @param detJ_deriv                   Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
+     * @param rDN_Dx_deriv                 Derivative of shape function gradients w.r.t. $x^c_k$
+     * @param rCurrentProcessInfo          Current process info
+     * @return double                      Effective kinematic viscosity shape derivative w.r.t. $x^c_k$
      */
     virtual double CalculateEffectiveKinematicViscosityShapeSensitivity(
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -1324,15 +1352,19 @@ public:
      *
      * This method should be implemented by the derrived class.
      *
-     * @param rCurrentData         Data required to calculate partial derivatives
-     * @param rShapeDerivative     Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
-     * @param detJ_deriv           Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
-     * @param rDN_Dx_deriv         Derivative of shape function gradients w.r.t. $x^c_k$
-     * @param rCurrentProcessInfo  Current process info
-     * @return double              Reaction coefficient shape derivative w.r.t. $x^c_k$
+     * @param rCurrentData                 Data required to calculate partial derivatives
+     * @param rShapeFunctions              Shape functions of the gauss point
+     * @param rShapeFunctionDerivatives    Shape function derivatives of the gauss point*
+     * @param rShapeDerivative             Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
+     * @param detJ_deriv                   Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
+     * @param rDN_Dx_deriv                 Derivative of shape function gradients w.r.t. $x^c_k$
+     * @param rCurrentProcessInfo          Current process info
+     * @return double                      Reaction coefficient shape derivative w.r.t. $x^c_k$
      */
     virtual double CalculateReactionTermShapeSensitivity(
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -1357,15 +1389,19 @@ public:
      *
      * This method should be implemented by the derrived class.
      *
-     * @param rCurrentData         Data required to calculate partial derivatives
-     * @param rShapeDerivative     Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
-     * @param detJ_deriv           Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
-     * @param rDN_Dx_deriv         Derivative of shape function gradients w.r.t. $x^c_k$
-     * @param rCurrentProcessInfo  Current process info
-     * @return double              Source term shape derivative w.r.t. $x^c_k$
+     * @param rCurrentData                 Data required to calculate partial derivatives
+     * @param rShapeFunctions              Shape functions of the gauss point
+     * @param rShapeFunctionDerivatives    Shape function derivatives of the gauss point
+     * @param rShapeDerivative             Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
+     * @param detJ_deriv                   Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
+     * @param rDN_Dx_deriv                 Derivative of shape function gradients w.r.t. $x^c_k$
+     * @param rCurrentProcessInfo          Current process info
+     * @return double                      Source term shape derivative w.r.t. $x^c_k$
      */
     virtual double CalculateSourceTermShapeSensitivity(
         const TElementData& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -1521,18 +1557,20 @@ private:
             const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateEffectiveKinematicViscosityScalarDerivatives(
-                effective_kinematic_viscosity_derivatives, rDerivativeVariable,
-                current_data, rCurrentProcessInfo);
+                effective_kinematic_viscosity_derivatives, rDerivativeVariable, current_data,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             const double reaction = this->CalculateReactionTerm(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateReactionTermScalarDerivatives(
-                reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+                reaction_derivatives, rDerivativeVariable, current_data,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             const double source = this->CalculateSourceTerm(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateSourceTermScalarDerivatives(
-                source_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+                source_derivatives, rDerivativeVariable, current_data,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -1915,13 +1953,14 @@ private:
             const double effective_kinematic_viscosity = this->CalculateEffectiveKinematicViscosity(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateEffectiveKinematicViscosityScalarDerivatives(
-                effective_kinematic_viscosity_derivatives, rDerivativeVariable,
-                current_data, rCurrentProcessInfo);
+                effective_kinematic_viscosity_derivatives, rDerivativeVariable, current_data,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             const double reaction = this->CalculateReactionTerm(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
             this->CalculateReactionTermScalarDerivatives(
-                reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+                reaction_derivatives, rDerivativeVariable, current_data,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             const double relaxed_scalar_rate = this->EvaluateInPoint(
                 this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
@@ -2136,10 +2175,12 @@ private:
                         inner_prod(velocity, primal_variable_gradient_deriv);
 
                     const double reaction_deriv = this->CalculateReactionTermShapeSensitivity(
-                        current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
+                        current_data, gauss_shape_functions, r_shape_derivatives,
+                        deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
                     const double effective_kinematic_viscosity_deriv =
                         this->CalculateEffectiveKinematicViscosityShapeSensitivity(
-                            current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
+                            current_data, gauss_shape_functions, r_shape_derivatives,
+                            deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
 
                     this->GetConvectionOperator(
                         convective_primal_variable_gradient_terms_deriv,
@@ -2168,7 +2209,8 @@ private:
                             primal_variable_gradient, DN_DX_deriv, primal_variable_nodal_values);
 
                     const double source_deriv = this->CalculateSourceTermShapeSensitivity(
-                        current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
+                        current_data, gauss_shape_functions, r_shape_derivatives,
+                        deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
 
                     const double residual_deriv =
                         StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualShapeSensitivity(

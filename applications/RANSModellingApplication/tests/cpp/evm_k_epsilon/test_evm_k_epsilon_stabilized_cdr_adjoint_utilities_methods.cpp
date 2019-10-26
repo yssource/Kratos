@@ -83,11 +83,13 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateStabilizationTauScalarDer
 
             BoundedVector<double, number_of_nodes> effective_kinematic_viscosity_derivatives;
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-                effective_kinematic_viscosity_derivatives, perturb_variable, rData, rProcessInfo);
+                effective_kinematic_viscosity_derivatives, perturb_variable,
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo);
 
             BoundedVector<double, number_of_nodes> reaction_derivatives;
             rElement.CalculateReactionTermScalarDerivatives(
-                reaction_derivatives, perturb_variable, rData, rProcessInfo);
+                reaction_derivatives, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
 
             StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateStabilizationTauScalarDerivatives<number_of_nodes>(
                 rOutput, tau, effective_kinematic_viscosity, reaction, element_length,
@@ -163,11 +165,13 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateResidualScalarDerivative_
 
             BoundedVector<double, number_of_nodes> reaction_derivatives;
             rElement.CalculateReactionTermScalarDerivatives(
-                reaction_derivatives, perturb_variable, rData, rProcessInfo);
+                reaction_derivatives, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
 
             BoundedVector<double, number_of_nodes> source_derivatives;
             rElement.CalculateSourceTermScalarDerivatives(
-                source_derivatives, perturb_variable, rData, rProcessInfo);
+                source_derivatives, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
 
             StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualScalarDerivative(
                 rOutput, primal_variable_value, reaction, r_velocity,
@@ -275,7 +279,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateChiScalarDerivative_TURBU
 
             BoundedVector<double, number_of_nodes> reaction_derivatives;
             rElement.CalculateReactionTermScalarDerivatives(
-                reaction_derivatives, perturb_variable, rData, rProcessInfo);
+                reaction_derivatives, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
 
             array_1d<double, 3> scalar_gradient;
             rElement.CalculateGradient(scalar_gradient, primal_variable, rShapeDerivatives);
@@ -412,18 +417,20 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculatePositivityPreservationCoe
         const double effective_kinematic_viscosity = rElement.CalculateEffectiveKinematicViscosity(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-            effective_kinematic_viscosity_derivatives, rDerivativeVariable,
-            current_data, rCurrentProcessInfo);
+            effective_kinematic_viscosity_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction = rElement.CalculateReactionTerm(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateReactionTermScalarDerivatives(
-            reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+            reaction_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double source = rElement.CalculateSourceTerm(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateSourceTermScalarDerivatives(
-            source_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+            source_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         double tau, element_length;
         StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -622,18 +629,20 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateCrossWindDiffusionCoeffSc
         const double effective_kinematic_viscosity = rElement.CalculateEffectiveKinematicViscosity(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-            effective_kinematic_viscosity_derivatives, rDerivativeVariable,
-            current_data, rCurrentProcessInfo);
+            effective_kinematic_viscosity_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction = rElement.CalculateReactionTerm(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateReactionTermScalarDerivatives(
-            reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+            reaction_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double source = rElement.CalculateSourceTerm(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateSourceTermScalarDerivatives(
-            source_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+            source_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         double tau, element_length;
         StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -850,18 +859,20 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateStreamLineDiffusionCoeffS
         const double effective_kinematic_viscosity = rElement.CalculateEffectiveKinematicViscosity(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-            effective_kinematic_viscosity_derivatives, rDerivativeVariable,
-            current_data, rCurrentProcessInfo);
+            effective_kinematic_viscosity_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction = rElement.CalculateReactionTerm(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateReactionTermScalarDerivatives(
-            reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+            reaction_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double source = rElement.CalculateSourceTerm(
             current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
         rElement.CalculateSourceTermScalarDerivatives(
-            source_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
+            source_derivatives, rDerivativeVariable, current_data,
+            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         double tau, element_length;
         StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(

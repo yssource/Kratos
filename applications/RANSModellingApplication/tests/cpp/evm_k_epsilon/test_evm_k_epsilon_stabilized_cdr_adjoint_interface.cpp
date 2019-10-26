@@ -51,7 +51,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateEffectiveKinematicViscosi
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateEffectiveKinematicViscosity(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -85,7 +86,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateEffectiveKinematicViscosi
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateEffectiveKinematicViscosity(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -119,7 +121,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateReactionTermScalarDerivat
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateReactionTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateReactionTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -153,7 +156,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateReactionTermScalarDerivat
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateReactionTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateReactionTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -187,7 +191,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateSourceTermScalarDerivativ
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateSourceTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateSourceTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -221,7 +226,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateSourceTermScalarDerivativ
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateSourceTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateSourceTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -255,7 +261,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateEffectiveKinematicV
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateEffectiveKinematicViscosity(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -289,7 +296,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateEffectiveKinematicV
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateEffectiveKinematicViscosity(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -323,7 +331,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateReactionTermScalarD
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateReactionTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateReactionTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -357,7 +366,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateReactionTermScalarD
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateReactionTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateReactionTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -391,7 +401,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateSourceTermScalarDer
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateSourceTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
             return rElement.CalculateSourceTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
@@ -425,7 +436,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateSourceTermScalarDer
             const typename adjoint_element::BaseType::ConvectionDiffusionReactionAdjointDataType& rData,
             const ProcessInfo& rProcessInfo, const int GaussIndex) {
             rElement.CalculateSourceTermScalarDerivatives(
-                rOutput, perturb_variable, rData, rProcessInfo);
+                rOutput, perturb_variable, rData, rShapeFunctions,
+                rShapeDerivatives, rProcessInfo);
 
             double temp = rElement.CalculateSourceTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);

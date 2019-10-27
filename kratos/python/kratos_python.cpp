@@ -47,6 +47,7 @@
 #include "add_amgcl_solver_to_python.h"
 #include "add_process_info_to_python.h"
 #include "add_constitutive_law_to_python.h"
+#include "add_imposed_deformation_to_python.h"
 #include "add_serializer_to_python.h"
 #include "add_table_to_python.h"
 #include "add_strategies_to_python.h"
@@ -118,6 +119,7 @@ PYBIND11_MODULE(Kratos, m)
     AddUtilitiesToPython(m);
     AddProcessInfoToPython(m);
     AddConstitutiveLawToPython(m);
+    AddImposedDeformationToPython(m);
     AddSerializerToPython(m);
     AddTableToPython(m);
     AddGeometriesToPython(m);

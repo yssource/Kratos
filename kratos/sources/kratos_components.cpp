@@ -19,6 +19,7 @@
 #include "includes/element.h"
 #include "includes/condition.h"
 #include "includes/constitutive_law.h"
+#include "includes/imposed_deformation.h"
 #include "includes/master_slave_constraint.h"
 
 /* Utilities */
@@ -135,6 +136,16 @@ void AddKratosComponent(std::string const& Name, Variable<ConstitutiveLaw::Point
     KratosComponents<Variable<ConstitutiveLaw::Pointer> >::Add(Name, ThisComponent);
 }
 
+void AddKratosComponent(std::string const& Name, ImposedDeformation const& ThisComponent)
+{
+    KratosComponents<ImposedDeformation>::Add(Name, ThisComponent);
+}
+
+void AddKratosComponent(std::string const& Name, Variable<ImposedDeformation::Pointer> const& ThisComponent)
+{
+    KratosComponents<Variable<ImposedDeformation::Pointer> >::Add(Name, ThisComponent);
+}
+
 template class KratosComponents<Variable<bool> >;
 template class KratosComponents<Variable<int> >;
 template class KratosComponents<Variable<unsigned int> >;
@@ -159,6 +170,8 @@ template class KratosComponents<Element>;
 template class KratosComponents<Condition>;
 template class KratosComponents<ConstitutiveLaw>;
 template class KratosComponents<Variable<ConstitutiveLaw::Pointer>>;
+template class KratosComponents<ImposedDeformation>;
+template class KratosComponents<Variable<ImposedDeformation::Pointer>>;
 template class KratosComponents<MasterSlaveConstraint>;
 
 using RealSparseSpace = UblasSpace<double, boost::numeric::ublas::compressed_matrix<double>, boost::numeric::ublas::vector<double>>;

@@ -355,7 +355,7 @@ public:
      */
     virtual bool& CalculateValue(
         const ConstitutiveLaw* pConstitutiveLaw,
-        Parameters& rParameterValues,
+        ConstitutiveLaw::Parameters& rParameterValues,
         const Variable<bool>& rThisVariable,
         bool& rValue
         );
@@ -370,7 +370,7 @@ public:
      */
     virtual int& CalculateValue(
         const ConstitutiveLaw* pConstitutiveLaw,
-        Parameters& rParameterValues,
+        ConstitutiveLaw::Parameters& rParameterValues,
         const Variable<int>& rThisVariable,
         int& rValue
         );
@@ -430,7 +430,7 @@ public:
      */
     virtual array_1d<double, 3>& CalculateValue(
         const ConstitutiveLaw* pConstitutiveLaw,
-        Parameters& rParameterValues,
+        ConstitutiveLaw::Parameters& rParameterValues,
         const Variable<array_1d<double, 3 > >& rVariable,
         array_1d<double, 3 > & rValue
         );

@@ -33,9 +33,7 @@ ImposedDeformation::Pointer ImposedDeformation::Clone() const
 ImposedDeformation::Pointer ImposedDeformation::Create(Kratos::Parameters NewParameters) const
 {
     const std::string& r_name = NewParameters["name"].GetString();
-    //return KratosComponents<ImposedDeformation>::Get(r_name).Clone();
-    KRATOS_ERROR << "ImposedDeformation not yet registered" << std::endl;
-    return nullptr;
+    return KratosComponents<ImposedDeformation>::Get(r_name).Clone();
 }
 
 /***********************************************************************************/

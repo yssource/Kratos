@@ -35,12 +35,37 @@
 #include "containers/data_value_container.h"
 #include "containers/flags.h"
 
-
 namespace Kratos
 {
 
+///@name Kratos Globals
+///@{
+
+///@}
+///@name Type Definitions
+///@{
+
+///@}
+///@name  Enum's
+///@{
+
+///@}
+///@name  Functions
+///@{
+
+///@}
+///@name Kratos Classes
+///@{
+
+/// Forward declaring ImposedDeformation to be avoid cross references
+class ImposedDeformation;
+
 /**
- * Base class of constitutive laws.
+ * @class ImposedDeformation
+ * @ingroup KratosCore
+ * @brief This is the base class of the ConstitutiveLaw. Must be specialized in order to be able to impose different behaviours
+ * @author Riccardo Rossi
+ * @see Flags
  */
 class KRATOS_API(KRATOS_CORE) ConstitutiveLaw : public Flags
 {
@@ -527,6 +552,13 @@ public:
      * @note This function HAS TO BE IMPLEMENTED by any derived class
      */
     virtual SizeType GetStrainSize();
+
+    /**
+     * @brief Gets the current imposed deformation instance
+     * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
+     * @return The current imposed deformation instance
+     */
+    virtual ImposedDeformation* GetImposedDeformation (ConstitutiveLaw::Parameters& rParameterValues);
 
     /**
      * @brief Returns whether this constitutive Law has specified variable (boolean)

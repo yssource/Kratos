@@ -13,8 +13,14 @@
 //                   Josep Maria Carbonell
 //
 
-#include "includes/constitutive_law.h"
+// System includes
 
+
+// External includes
+
+// Project includes
+#include "includes/constitutive_law.h"
+#include "includes/imposed_deformation.h"
 
 namespace Kratos
 {
@@ -30,7 +36,7 @@ namespace Kratos
     KRATOS_CREATE_LOCAL_FLAG( ConstitutiveLaw, COMPUTE_STRESS,               1 );
     KRATOS_CREATE_LOCAL_FLAG( ConstitutiveLaw, COMPUTE_CONSTITUTIVE_TENSOR,  2 );
     KRATOS_CREATE_LOCAL_FLAG( ConstitutiveLaw, COMPUTE_STRAIN_ENERGY,        3 );
-  
+
     KRATOS_CREATE_LOCAL_FLAG( ConstitutiveLaw, ISOCHORIC_TENSOR_ONLY,        4 );
     KRATOS_CREATE_LOCAL_FLAG( ConstitutiveLaw, VOLUMETRIC_TENSOR_ONLY,       5 );
 
@@ -40,7 +46,7 @@ namespace Kratos
 
     KRATOS_CREATE_LOCAL_FLAG( ConstitutiveLaw, INITIALIZE_MATERIAL_RESPONSE, 9 );
     KRATOS_CREATE_LOCAL_FLAG( ConstitutiveLaw, FINALIZE_MATERIAL_RESPONSE,  10 );
-  
+
 
     /**
      * Flags related to the Features of the Constitutive Law
@@ -103,6 +109,20 @@ ConstitutiveLaw::SizeType ConstitutiveLaw::WorkingSpaceDimension()
 ConstitutiveLaw::SizeType ConstitutiveLaw::GetStrainSize()
 {
     KRATOS_ERROR <<  "Called the virtual function for GetStrainSize"<< std::endl;;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+ImposedDeformation* ConstitutiveLaw::GetImposedDeformation (ConstitutiveLaw::Parameters& rParameterValues)
+{
+    // Material properties
+    const Properties& r_material_properties = rParameterValues.GetMaterialProperties();
+    if (r_material_properties.Has(IMPOSED_DEFORMATION)) {
+        return (&(*r_material_properties.GetValue(IMPOSED_DEFORMATION)));
+    }
+
+    return NULL;
 }
 
 /**
@@ -639,16 +659,16 @@ void ConstitutiveLaw::CalculateMaterialResponseCauchy (Parameters& rValues)
 	{
 	case StressMeasure_PK1:         InitializeMaterialResponsePK1(rValues);
 	  break;
-      
+
 	case StressMeasure_PK2:         InitializeMaterialResponsePK2(rValues);
 	  break;
-	  
+
 	case StressMeasure_Kirchhoff: 	InitializeMaterialResponseKirchhoff(rValues);
 	  break;
 
 	case StressMeasure_Cauchy:	InitializeMaterialResponseCauchy(rValues);
 	  break;
-	  
+
 	default:
 	  KRATOS_THROW_ERROR(std::logic_error, " Stress Measure not Defined ", "");
 	  break;
@@ -696,7 +716,7 @@ void ConstitutiveLaw::CalculateMaterialResponseCauchy (Parameters& rValues)
     {
       KRATOS_THROW_ERROR(std::logic_error, "Calling virtual function for InitializeMaterialResponseCauchy", "");
     }
-    
+
 
 /**
  * Updates the material response,  called by the element in FinalizeSolutionStep.

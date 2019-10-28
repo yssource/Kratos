@@ -51,8 +51,8 @@ namespace Kratos
 /**
  * @class ImposedDeformation
  * @ingroup KratosCore
- * @brief This is the baase class defined in order to impose an initial deformation in a imposed deformation. Must be specialized in order to be able to impose different behaviours
- * @details Must be called in the imposed deformation implementation
+ * @brief This is the base class defined in order to impose an initial deformation in a imposed deformation. Must be specialized in order to be able to impose different behaviours
+ * @details Must be called in the constitutive law implementation
  * @author Vicente Mataix Ferrandiz
  * @see ConstitutiveLaw
  * @see Flags

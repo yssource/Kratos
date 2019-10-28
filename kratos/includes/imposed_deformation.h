@@ -477,7 +477,7 @@ public:
      * @see ConstitutiveLaw::Parameters
      * @see ConstitutiveLaw::StressMeasure
      */
-    void CalculateMaterialResponse (
+    void CalculateResponse (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues,
         const ConstitutiveLaw::StressMeasure& rStressMeasure
@@ -489,7 +489,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void CalculateMaterialResponsePK1 (
+    virtual void CalculateResponsePK1 (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -500,7 +500,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void CalculateMaterialResponsePK2 (
+    virtual void CalculateResponsePK2 (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -511,7 +511,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstititutiveLaw::Parameters
      */
-    virtual void CalculateMaterialResponseKirchhoff (
+    virtual void CalculateResponseKirchhoff (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -522,7 +522,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void CalculateMaterialResponseCauchy(
+    virtual void CalculateResponseCauchy(
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -535,7 +535,7 @@ public:
      * @see ConstitutiveLaw::Parameters
      * @see ConstititutiveLaw::StressMeasures
      */
-    void InitializeMaterialResponse (
+    void InitializeResponse (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues,
         const ConstitutiveLaw::StressMeasure& rStressMeasure
@@ -547,7 +547,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void InitializeMaterialResponsePK1 (
+    virtual void InitializeResponsePK1 (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -558,7 +558,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void InitializeMaterialResponsePK2 (
+    virtual void InitializeResponsePK2 (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -569,7 +569,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void InitializeMaterialResponseKirchhoff (
+    virtual void InitializeResponseKirchhoff (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -580,7 +580,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void InitializeMaterialResponseCauchy (
+    virtual void InitializeResponseCauchy (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -593,7 +593,7 @@ public:
      * @see ConstitutiveLaw::Parameters
      * @see ConstitutiveLaw::StressMeasures
      */
-    void FinalizeMaterialResponse (
+    void FinalizeResponse (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues,
         const ConstitutiveLaw::StressMeasure& rStressMeasure
@@ -605,7 +605,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void FinalizeMaterialResponsePK1 (
+    virtual void FinalizeResponsePK1 (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -616,7 +616,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void FinalizeMaterialResponsePK2(
+    virtual void FinalizeResponsePK2(
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -627,7 +627,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void FinalizeMaterialResponseKirchhoff (
+    virtual void FinalizeResponseKirchhoff (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );
@@ -638,7 +638,7 @@ public:
      * @param rParameterValues The needed parameters for the imposed deformation (coming from constitutive law)
      * @see ConstitutiveLaw::Parameters
      */
-    virtual void FinalizeMaterialResponseCauchy (
+    virtual void FinalizeResponseCauchy (
         const ConstitutiveLaw* pConstitutiveLaw,
         ConstitutiveLaw::Parameters& rParameterValues
         );

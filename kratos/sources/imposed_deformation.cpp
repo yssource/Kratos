@@ -379,7 +379,7 @@ void ImposedDeformation::Initialize(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::CalculateMaterialResponse (
+void ImposedDeformation::CalculateResponse (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues,
     const ConstitutiveLaw::StressMeasure& rStressMeasure
@@ -388,19 +388,19 @@ void ImposedDeformation::CalculateMaterialResponse (
     switch(rStressMeasure)
     {
         case ConstitutiveLaw::StressMeasure_PK1:
-        CalculateMaterialResponsePK1(pConstitutiveLaw, rParameterValues);
+        CalculateResponsePK1(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_PK2:
-        CalculateMaterialResponsePK2(pConstitutiveLaw, rParameterValues);
+        CalculateResponsePK2(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_Kirchhoff:
-        CalculateMaterialResponseKirchhoff(pConstitutiveLaw, rParameterValues);
+        CalculateResponseKirchhoff(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_Cauchy:
-        CalculateMaterialResponseCauchy(pConstitutiveLaw, rParameterValues);
+        CalculateResponseCauchy(pConstitutiveLaw, rParameterValues);
         break;
 
     default:
@@ -412,51 +412,51 @@ void ImposedDeformation::CalculateMaterialResponse (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::CalculateMaterialResponsePK1 (
+void ImposedDeformation::CalculateResponsePK1 (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
 {
-    KRATOS_ERROR << "Calling virtual function for CalculateMaterialResponsePK1" << std::endl;
+    KRATOS_ERROR << "Calling virtual function for CalculateResponsePK1" << std::endl;
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::CalculateMaterialResponsePK2 (
+void ImposedDeformation::CalculateResponsePK2 (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
 {
-    KRATOS_ERROR << "Calling virtual function for CalculateMaterialResponsePK2" << std::endl;
+    KRATOS_ERROR << "Calling virtual function for CalculateResponsePK2" << std::endl;
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::CalculateMaterialResponseKirchhoff (
+void ImposedDeformation::CalculateResponseKirchhoff (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
 {
-    KRATOS_ERROR << "Calling virtual function for CalculateMaterialResponseKirchhoff" << std::endl;
+    KRATOS_ERROR << "Calling virtual function for CalculateResponseKirchhoff" << std::endl;
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::CalculateMaterialResponseCauchy(
+void ImposedDeformation::CalculateResponseCauchy(
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
 {
-    KRATOS_ERROR << "Calling virtual function for CalculateMaterialResponseCauchy" << std::endl;
+    KRATOS_ERROR << "Calling virtual function for CalculateResponseCauchy" << std::endl;
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::InitializeMaterialResponse (
+void ImposedDeformation::InitializeResponse (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues,
     const ConstitutiveLaw::StressMeasure& rStressMeasure
@@ -465,19 +465,19 @@ void ImposedDeformation::InitializeMaterialResponse (
     switch(rStressMeasure)
     {
     case ConstitutiveLaw::StressMeasure_PK1:
-        InitializeMaterialResponsePK1(pConstitutiveLaw, rParameterValues);
+        InitializeResponsePK1(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_PK2:
-        InitializeMaterialResponsePK2(pConstitutiveLaw, rParameterValues);
+        InitializeResponsePK2(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_Kirchhoff:
-        InitializeMaterialResponseKirchhoff(pConstitutiveLaw, rParameterValues);
+        InitializeResponseKirchhoff(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_Cauchy:
-        InitializeMaterialResponseCauchy(pConstitutiveLaw, rParameterValues);
+        InitializeResponseCauchy(pConstitutiveLaw, rParameterValues);
         break;
 
     default:
@@ -489,7 +489,7 @@ void ImposedDeformation::InitializeMaterialResponse (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::InitializeMaterialResponsePK1 (
+void ImposedDeformation::InitializeResponsePK1 (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
@@ -500,7 +500,7 @@ void ImposedDeformation::InitializeMaterialResponsePK1 (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::InitializeMaterialResponsePK2 (
+void ImposedDeformation::InitializeResponsePK2 (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
@@ -511,7 +511,7 @@ void ImposedDeformation::InitializeMaterialResponsePK2 (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::InitializeMaterialResponseKirchhoff (
+void ImposedDeformation::InitializeResponseKirchhoff (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
@@ -522,7 +522,7 @@ void ImposedDeformation::InitializeMaterialResponseKirchhoff (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::InitializeMaterialResponseCauchy (
+void ImposedDeformation::InitializeResponseCauchy (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
@@ -533,7 +533,7 @@ void ImposedDeformation::InitializeMaterialResponseCauchy (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::FinalizeMaterialResponse (
+void ImposedDeformation::FinalizeResponse (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues,
     const ConstitutiveLaw::StressMeasure& rStressMeasure
@@ -542,19 +542,19 @@ void ImposedDeformation::FinalizeMaterialResponse (
     switch(rStressMeasure)
     {
     case ConstitutiveLaw::StressMeasure_PK1:
-        FinalizeMaterialResponsePK1(pConstitutiveLaw, rParameterValues);
+        FinalizeResponsePK1(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_PK2:
-        FinalizeMaterialResponsePK2(pConstitutiveLaw, rParameterValues);
+        FinalizeResponsePK2(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_Kirchhoff:
-        FinalizeMaterialResponseKirchhoff(pConstitutiveLaw, rParameterValues);
+        FinalizeResponseKirchhoff(pConstitutiveLaw, rParameterValues);
         break;
 
     case ConstitutiveLaw::StressMeasure_Cauchy:
-        FinalizeMaterialResponseCauchy(pConstitutiveLaw, rParameterValues);
+        FinalizeResponseCauchy(pConstitutiveLaw, rParameterValues);
         break;
 
     default:
@@ -566,7 +566,7 @@ void ImposedDeformation::FinalizeMaterialResponse (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::FinalizeMaterialResponsePK1 (
+void ImposedDeformation::FinalizeResponsePK1 (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
@@ -577,7 +577,7 @@ void ImposedDeformation::FinalizeMaterialResponsePK1 (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::FinalizeMaterialResponsePK2(
+void ImposedDeformation::FinalizeResponsePK2(
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
@@ -588,7 +588,7 @@ void ImposedDeformation::FinalizeMaterialResponsePK2(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::FinalizeMaterialResponseKirchhoff (
+void ImposedDeformation::FinalizeResponseKirchhoff (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )
@@ -599,7 +599,7 @@ void ImposedDeformation::FinalizeMaterialResponseKirchhoff (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void ImposedDeformation::FinalizeMaterialResponseCauchy (
+void ImposedDeformation::FinalizeResponseCauchy (
     const ConstitutiveLaw* pConstitutiveLaw,
     ConstitutiveLaw::Parameters& rParameterValues
     )

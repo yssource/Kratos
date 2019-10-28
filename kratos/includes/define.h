@@ -576,6 +576,13 @@ catch(...) { Block KRATOS_THROW_ERROR(std::runtime_error, "Unknown error", MoreI
 #define KRATOS_REGISTER_CONSTITUTIVE_LAW(name, reference) \
     KratosComponents<ConstitutiveLaw >::Add(name, reference); \
     Serializer::Register(name, reference);
+    
+#ifdef KRATOS_REGISTER_IMPOSED_DEFORMATION
+#undef KRATOS_REGISTER_IMPOSED_DEFORMATION
+#endif
+#define KRATOS_REGISTER_IMPOSED_DEFORMATION(name, reference) \
+    KratosComponents<ImposedDeformation >::Add(name, reference); \
+    Serializer::Register(name, reference);
 
 #if __cplusplus >= 201402L
 #define KRATOS_DEPRECATED [[deprecated]]

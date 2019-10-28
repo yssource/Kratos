@@ -354,5 +354,8 @@ void KratosApplication::RegisterKratosCore() {
 
     // Register ConstitutiveLaw BaseClass
     KRATOS_REGISTER_CONSTITUTIVE_LAW("ConstitutiveLaw", mConstitutiveLaw);
+    
+    // Register ImposedDeformation BaseClass
+    KRATOS_REGISTER_IMPOSED_DEFORMATION("ImposedDeformation", mImposedDeformation);
 }
 }  // namespace Kratos.

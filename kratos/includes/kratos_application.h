@@ -31,6 +31,8 @@
 #include "utilities/quaternion.h"
 #include "includes/master_slave_constraint.h"
 #include "includes/linear_master_slave_constraint.h"
+#include "includes/constitutive_law.h"
+#include "includes/imposed_deformation.h"
 
 namespace Kratos {
 ///@name Kratos Classes
@@ -418,6 +420,9 @@ class KRATOS_API(KRATOS_CORE) KratosApplication {
 
     // Base constitutive law definition
     const ConstitutiveLaw mConstitutiveLaw;
+    
+    // Base imposed deformation definition
+    const ImposedDeformation mImposedDeformation;
 
     // KratosComponents definition
     KratosComponents<VariableData>::ComponentsContainerType* mpVariableData;

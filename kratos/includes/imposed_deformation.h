@@ -55,8 +55,10 @@ namespace Kratos
  * @details Must be called in the imposed deformation implementation
  * @author Vicente Mataix Ferrandiz
  * @see ConstitutiveLaw
+ * @see Flags
  */
 class KRATOS_API(KRATOS_CORE) ImposedDeformation
+    : public Flags
 {
 public:
 
@@ -68,6 +70,9 @@ public:
 
     /// Pointer definition of ImposedDeformation
     KRATOS_CLASS_POINTER_DEFINITION(ImposedDeformation);
+
+    /// Flags related to the Parameters of the imposed deformation
+    KRATOS_DEFINE_LOCAL_FLAG( IS_INITIALIZED );
 
     ///@}
     ///@name Life Cycle
@@ -90,7 +95,7 @@ public:
     ///@name Operations
     ///@{
 
-      /**
+    /**
      * @brief Clone function (has to be implemented by any derived class)
      * @return A pointer to a new instance of this imposed deformation
      * @note implementation scheme:
@@ -681,7 +686,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream buffer;
         buffer << "ImposedDeformation";
@@ -689,13 +694,13 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const  override
     {
         rOStream << "ImposedDeformation";
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
       rOStream << "ImposedDeformation has no data";
     }
@@ -760,12 +765,14 @@ private:
 
     friend class Serializer;
 
-    void save(Serializer& rSerializer) const
+    void save(Serializer& rSerializer) const override
     {
+        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Flags );
     }
 
-    void load(Serializer& rSerializer)
+    void load(Serializer& rSerializer) override
     {
+        KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Flags );
     }
 
     ///@}

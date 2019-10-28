@@ -56,7 +56,7 @@ void NewInterfaceCalculateMaterialResponse(ImposedDeformation& rThisImposedDefor
 
 void AddImposedDeformationToPython(pybind11::module& m)
 {
-    py::class_< ImposedDeformation, ImposedDeformation::Pointer>(m,"ImposedDeformation")
+    py::class_< ImposedDeformation, ImposedDeformation::Pointer, Flags>(m,"ImposedDeformation")
     .def(py::init<>() )
     .def("Create",&ImposedDeformation::Create)
     .def("Clone",&ImposedDeformation::Clone)

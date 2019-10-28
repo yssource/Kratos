@@ -20,6 +20,11 @@
 
 namespace Kratos
 {
+/// Flags related to the Parameters of the imposed deformation
+KRATOS_CREATE_LOCAL_FLAG( ImposedDeformation, IS_INITIALIZED,  0 );
+
+/***********************************************************************************/
+/***********************************************************************************/
 
 ImposedDeformation::Pointer ImposedDeformation::Clone() const
 {
@@ -368,7 +373,7 @@ void ImposedDeformation::Initialize(
     const Vector& rShapeFunctionsValues
     )
 {
-    // NOT MANDATORY
+    this->Set(IS_INITIALIZED);
 }
 
 /***********************************************************************************/

@@ -64,9 +64,6 @@ struct RansEvmEpsilonAdjointData
 
     double TurbulentReynoldsNumber;
 
-    Matrix ShapeFunctionDerivatives;
-    Vector ShapeFunctions;
-
     Matrix NodalVelocity;
 
     BoundedVector<double, TNumNodes> TurbulentKinematicViscositySensitivitiesK;
@@ -341,37 +338,51 @@ private:
         BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateReactionTermScalarDerivatives(
         BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateSourceTermScalarDerivatives(
         BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateEffectiveKinematicViscosityVelocityDerivatives(
         BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateReactionTermVelocityDerivatives(
         BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateSourceTermVelocityDerivatives(
         BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateEffectiveKinematicViscosityShapeSensitivity(
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -379,6 +390,8 @@ private:
 
     double CalculateReactionTermShapeSensitivity(
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -386,6 +399,8 @@ private:
 
     double CalculateSourceTermShapeSensitivity(
         const RansEvmEpsilonAdjointData<TNumNodes>& rCurrentData,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,

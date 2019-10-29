@@ -66,7 +66,7 @@ void ConstitutiveLawWithImposedDeformation::InitializeMaterial(
 {
     // Assign imposed deformation
     if (rMaterialProperties.Has(IMPOSED_DEFORMATION)) {
-        mpImposedDeformation = (&(*rMaterialProperties.GetValue(IMPOSED_DEFORMATION)));
+        mpImposedDeformation = (&(*(rMaterialProperties.GetValue(IMPOSED_DEFORMATION)->Clone())));
     }
 }
 

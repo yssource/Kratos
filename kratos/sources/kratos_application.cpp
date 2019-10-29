@@ -186,8 +186,7 @@ void KratosApplication::RegisterKratosCore() {
     KRATOS_REGISTER_CONDITION("Condition2D", mCondition2D);
     KRATOS_REGISTER_CONDITION("Condition2D2N", mCondition2D2N);
     KRATOS_REGISTER_CONDITION("Condition2D3N", mCondition2D3N);
-    KRATOS_REGISTER_CONDITION("Condition3D",
-        mCondition3D);  // Note: The name could be changed to Condition3D3N (conflict with the quadratic line)
+    KRATOS_REGISTER_CONDITION("Condition3D", mCondition3D);  // NOTE: The name could be changed to Condition3D3N (conflict with the quadratic line)
     KRATOS_REGISTER_CONDITION("Condition3D2N", mCondition3D2N);
     KRATOS_REGISTER_CONDITION("Condition3D3N", mCondition3D3N);
     KRATOS_REGISTER_CONDITION("Condition3D6N", mCondition3D6N);

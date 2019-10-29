@@ -415,6 +415,7 @@ KRATOS_CREATE_VARIABLE(Matrix, INERTIA)
 
 //for General kratos application:
 KRATOS_CREATE_VARIABLE(ConstitutiveLaw::Pointer, CONSTITUTIVE_LAW)
+KRATOS_CREATE_VARIABLE(ImposedDeformation::Pointer, IMPOSED_DEFORMATION)
 
 //NEIGHBOR_ELEMENTS defined in element.h
 KRATOS_CREATE_VARIABLE(GlobalPointersVector<Element>, NEIGHBOUR_ELEMENTS)

@@ -32,6 +32,7 @@
 #include "includes/master_slave_constraint.h"
 #include "includes/linear_master_slave_constraint.h"
 #include "includes/constitutive_law.h"
+#include "constitutive/constitutive_law_with_imposed_deformation.h"
 #include "includes/imposed_deformation.h"
 
 namespace Kratos {
@@ -420,7 +421,8 @@ class KRATOS_API(KRATOS_CORE) KratosApplication {
 
     // Base constitutive law definition
     const ConstitutiveLaw mConstitutiveLaw;
-    
+    const ConstitutiveLawWithImposedDeformation mConstitutiveLawWithImposedDeformation;
+
     // Base imposed deformation definition
     const ImposedDeformation mImposedDeformation;
 
